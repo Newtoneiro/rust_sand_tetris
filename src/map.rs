@@ -1,16 +1,7 @@
-use crate::constants::map_constants::{
-    GRAIN_SIDE_SIZE,
-    MAP_WIDTH,
-    MAP_HEIGHT,
-};
+use crate::constants::colors::BACKGROUND_COLOR;
+use crate::field::Field;
 
-#[derive(Debug)]
-struct Field {
-    x: usize,
-    y: usize,
-}
-
-struct Map {
+pub struct Map {
     width: usize,
     height: usize,
     grid: Vec<Vec<Field>>
@@ -29,7 +20,7 @@ impl Map {
             grid.push(Vec::new());
             for x in 0..width {
                 grid[y].push(
-                    Field {x, y}
+                    Field::new(x, y, BACKGROUND_COLOR)
                 );
             }
         };
@@ -44,24 +35,20 @@ impl Map {
     }
 
     fn check_coords_in_bounds(&self, x: usize, y: usize) -> bool {
-        if (0 <= x && x < self.width) && (0 <= y && y < self.height) {
+        if (x < self.width) && (y < self.height) {
             return true;
         }
         false
+    }
+
+    pub fn get_grid(&self) -> &Vec<Vec<Field>> {
+        &self.grid
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn create_field() {
-        let field: Field = Field { x: 1, y: 2};
-
-        assert_eq!(field.x, 1);
-        assert_eq!(field.y, 2);
-    }
 
     #[test]
     fn create_map() {
@@ -81,12 +68,12 @@ mod test {
         let field_min: &Field = map.get_field(0, 0).unwrap();
         let field_max: &Field = map.get_field(199, 399).unwrap();
 
-        assert_eq!(field_middle.x, 20);
-        assert_eq!(field_middle.y, 40);
-        assert_eq!(field_min.x, 0);
-        assert_eq!(field_min.y, 0);
-        assert_eq!(field_max.x, 199);
-        assert_eq!(field_max.y, 399);
+        assert_eq!(field_middle.get_x(), 20);
+        assert_eq!(field_middle.get_y(), 40);
+        assert_eq!(field_min.get_x(), 0);
+        assert_eq!(field_min.get_y(), 0);
+        assert_eq!(field_max.get_x(), 199);
+        assert_eq!(field_max.get_y(), 399);
     }
 
     #[test]

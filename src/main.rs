@@ -1,5 +1,6 @@
 mod constants;
 mod map;
+mod field;
 mod graphic_controller;
 
 use macroquad::prelude::*;
@@ -8,6 +9,12 @@ use constants::window_constants::{
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
 };
+use constants::map_constants::{
+    MAP_WIDTH,
+    MAP_HEIGHT,
+};
+use map::Map;
+use graphic_controller::GraphicController;
 
 fn window_conf() -> Conf {
     Conf {
@@ -20,6 +27,10 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    let map = Map::new(MAP_WIDTH, MAP_HEIGHT);
+    loop {
+        GraphicController::draw_grid(map.get_grid()).await;
+    }
 }
 
 #[cfg(test)]
