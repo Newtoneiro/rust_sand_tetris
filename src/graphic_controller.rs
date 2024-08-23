@@ -3,22 +3,16 @@ use crate::constants::colors::BACKGROUND_COLOR;
 use crate::field::Field;
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
 
-pub struct GraphicController {
-
-}
+pub struct GraphicController {}
 
 impl GraphicController {
-    pub fn new() -> Self {
-        GraphicController {}
-    }
-
-    pub async fn draw_grid(grid: &Vec<Vec<Field>>) {
+    pub async fn draw_fields(fields: Vec<Field>) {
         GraphicController::draw_background();
-        for row in grid {
-            for field in row {
-                GraphicController::draw_field(&field);
-            }
+
+        for field in fields {
+            GraphicController::draw_field(&field);
         }
+
         GraphicController::flush().await;
     }
 

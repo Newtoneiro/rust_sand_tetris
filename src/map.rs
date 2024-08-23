@@ -41,13 +41,23 @@ impl Map {
         false
     }
 
-    pub fn get_grid(&self) -> &Vec<Vec<Field>> {
-        &self.grid
+    pub fn get_fields_to_draw(&self) -> Vec<Field> {
+        let mut output: Vec<Field> = Vec::new();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if self.get_field(x, y).unwrap().do_draw() {
+                    output.push(self.get_field(x, y).unwrap().clone())
+                }
+            }
+        };
+        output
     }
 }
 
 #[cfg(test)]
 mod test {
+    use macroquad::color::RED;
+
     use super::*;
 
     #[test]
@@ -85,5 +95,21 @@ mod test {
 
             assert!(field_middle.is_none());
         }
+    }
+
+    #[test]
+    fn get_fields_to_draw() {
+        let mut map: Map = Map::new(200, 400);
+        map.grid[20][40].set_color(RED);
+        map.grid[15][30].set_color(RED);
+        map.grid[0][100].set_color(RED);
+
+        let fields_to_draw: Vec<Field> = map.get_fields_to_draw();
+
+        assert_eq!(fields_to_draw.len(), 3);
+        println!("{:?}", fields_to_draw);
+        assert!(fields_to_draw.contains(&Field::new(40, 20, RED)));
+        assert!(fields_to_draw.contains(&Field::new(30, 15, RED)));
+        assert!(fields_to_draw.contains(&Field::new(100, 0, RED)));
     }
 }

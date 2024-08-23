@@ -29,7 +29,7 @@ fn window_conf() -> Conf {
 async fn main() {
     let map = Map::new(MAP_WIDTH, MAP_HEIGHT);
     loop {
-        GraphicController::draw_grid(map.get_grid()).await;
+        GraphicController::draw_fields(map.get_fields_to_draw()).await;
     }
 }
 

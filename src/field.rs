@@ -2,7 +2,7 @@ use macroquad::color::Color;
 
 use crate::constants::colors::BACKGROUND_COLOR;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Field {
     x: usize,
     y: usize,
@@ -15,7 +15,7 @@ impl Field {
     }
 
     pub fn do_draw(&self) -> bool {
-        self.color == BACKGROUND_COLOR
+        self.color != BACKGROUND_COLOR
     }
 
     pub fn get_x(&self) -> usize {
@@ -28,6 +28,10 @@ impl Field {
 
     pub fn get_color(&self) -> Color {
         self.color
+    }
+
+    pub fn set_color(&mut self, new_color: Color) {
+        self.color = new_color;
     }
 }
 
@@ -46,6 +50,7 @@ mod test {
         assert_eq!(field.get_color(), RED);
     }
 
+    #[test]
     fn do_draw() {
         let field_dont: Field = Field::new(1, 2, BACKGROUND_COLOR);
         let field_do: Field = Field::new(1, 2, RED);
