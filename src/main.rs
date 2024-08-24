@@ -1,7 +1,9 @@
 mod constants;
 mod map;
+mod block;
 mod field;
 mod graphic_controller;
+mod block_controller;
 
 use macroquad::prelude::*;
 use constants::window_constants::{
