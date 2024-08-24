@@ -1,23 +1,23 @@
-use crate::constants::block_schemas::{self, LBlock};
+use crate::constants::block_schemas;
 
-struct Block {
+pub struct Block {
     schema: Vec<(i8, i8)>,
     rotation: u8, 
 }
 
-enum BlockType {
+pub enum BlockType {
     LBlock,
 }
 
 impl Block {
-    fn new(block_type: BlockType) -> Block {
+    pub fn new(block_type: BlockType) -> Block {
         let schema = match block_type {
             BlockType::LBlock => block_schemas::LBlock,
         };
         Block { schema: Vec::from(schema), rotation: 0 }
     }
 
-    fn get_schema(&self) -> Vec<(i8, i8)> {
+    pub fn get_schema(&self) -> Vec<(i8, i8)> {
         match self.rotation {
             0 => self.schema.clone(),
             1 => {

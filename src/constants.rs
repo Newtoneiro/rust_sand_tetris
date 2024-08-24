@@ -30,6 +30,16 @@ pub(crate) mod colors {
     pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.094, 0.074, 0.070, 1.0);
 }
 
+pub(crate) mod block_constants {
+    use super::map_constants::MAP_WIDTH;
+
+    pub(crate) const BLOCK_CHUNK_SIDE: i32 = 5;
+    pub(crate) const BLOCK_STARTING_POS: (i32, i32) = (
+        MAP_WIDTH / 2 - (BLOCK_CHUNK_SIDE / 2),
+        BLOCK_CHUNK_SIDE * 4,
+    );
+}
+
 pub(crate) mod block_schemas {
     pub(crate) const LBlock: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (1, 1)];
 }
