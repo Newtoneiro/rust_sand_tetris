@@ -1,4 +1,9 @@
-use crate::{block::{Block, BlockType}, constants::{block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS}, colors::RED, map_constants::{MAP_HEIGHT, MAP_WIDTH}}, map::Map};
+use crate::{
+    block::{Block, BlockType},
+    constants::{block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS},
+    colors::{BLUE, GREEN, RED, YELLOW}},
+    map::Map
+};
 use bounded_vec_deque::BoundedVecDeque;
 use macroquad::color::Color;
 use rand::Rng;
@@ -29,16 +34,24 @@ impl BlockController {
     }
 
     fn generate_random_block() -> Block {
-        let block_type = match rand::thread_rng().gen_range(0..=1) {
-            _ => BlockType::LBlock,
+        let block_type = match rand::thread_rng().gen_range(0..=6) {
+            1 => BlockType::LBlock,
+            2 => BlockType::RevLBlock,
+            3 => BlockType::SquareBlock,
+            4 => BlockType::ZBlock,
+            5 => BlockType::RevZBlock,
+            _ => BlockType::IBlock,
         };
 
         Block::new(block_type)
     }
 
     fn generate_random_color() -> Color {
-        match rand::thread_rng().gen_range(0..=1) {
-            _ => RED,
+        match rand::thread_rng().gen_range(0..=4) {
+            0 => RED,
+            1 => BLUE,
+            2 => GREEN,
+            _ => YELLOW,
         }
     }
 

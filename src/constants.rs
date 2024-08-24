@@ -27,8 +27,11 @@ pub(crate) mod map_constants {
 pub(crate) mod colors {
     use macroquad::color::Color;
 
-    pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.094, 0.074, 0.070, 1.0);
-    pub(crate) const RED: Color = Color::new(0.94, 0.074, 0.070, 1.0);
+    pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.10196, 0.0941, 0.1058, 1.0);
+    pub(crate) const RED: Color = Color::new(0.6392, 0.0862, 0.1294, 1.0);
+    pub(crate) const BLUE: Color = Color::new(0.0039, 0.4352, 0.7254, 1.0);
+    pub(crate) const GREEN: Color = Color::new(0.4980, 0.6980, 0.5215, 1.0);
+    pub(crate) const YELLOW: Color = Color::new(0.8588, 0.6, 0.3529, 1.0);
 }
 
 pub(crate) mod block_constants {
@@ -42,5 +45,10 @@ pub(crate) mod block_constants {
 }
 
 pub(crate) mod block_schemas {
-    pub(crate) const LBlock: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (1, 1)];
+    pub(crate) const L_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (1, 1)];
+    pub(crate) const REV_L_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (-1, 1)];
+    pub(crate) const SQUARE_BLOCK: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, 1)];
+    pub(crate) const Z_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (1, 0), (1, 1)];
+    pub(crate) const REV_Z_BLOCK: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, -1)];
+    pub(crate) const I_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (0, 2)];
 }
