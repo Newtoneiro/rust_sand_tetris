@@ -27,9 +27,23 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let map = Map::new(MAP_WIDTH, MAP_HEIGHT);
+    let mut map = Map::new(MAP_WIDTH, MAP_HEIGHT);
+    let mut i: u32 = 0;
+    // map.change_field_color(1, 9, RED); // Grain under
+    // map.change_field_color(1, 8, RED); // Grain above
+    
+    // map.change_field_color(3, 9, RED); // left Grain above
+    // map.change_field_color(3, 8, RED); // left Grain above
     loop {
         GraphicController::draw_fields(map.get_fields_to_draw()).await;
+        map.tick();
+        if i % 20 == 0 {
+            map.change_field_color(50, 0, RED);
+            // map.change_field_color(50, 1, RED);
+            // map.change_field_color(51, 0, RED);
+            // map.change_field_color(51, 1, RED);
+        }
+        i += 1;
     }
 }
 

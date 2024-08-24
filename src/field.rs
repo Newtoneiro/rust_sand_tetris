@@ -4,13 +4,13 @@ use crate::constants::colors::BACKGROUND_COLOR;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Field {
-    x: usize,
-    y: usize,
+    x: i32,
+    y: i32,
     color: Color,
 }
 
 impl Field {
-    pub fn new(x: usize, y: usize, color: Color) -> Self {
+    pub fn new(x: i32, y: i32, color: Color) -> Self {
         Field { x, y, color }
     }
 
@@ -18,11 +18,15 @@ impl Field {
         self.color != BACKGROUND_COLOR
     }
 
-    pub fn get_x(&self) -> usize {
+    pub fn is_empty(&self) -> bool {
+        self.color == BACKGROUND_COLOR
+    }
+
+    pub fn get_x(&self) -> i32 {
         self.x
     }
 
-    pub fn get_y(&self) -> usize {
+    pub fn get_y(&self) -> i32 {
         self.y
     }
 
