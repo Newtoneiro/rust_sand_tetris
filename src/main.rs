@@ -4,19 +4,15 @@ mod block;
 mod field;
 mod graphic_controller;
 mod block_controller;
+mod game_controller;
 
+use game_controller::GameController;
 use macroquad::prelude::*;
 use constants::window_constants::{
     WINDOW_TITLE,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
 };
-use constants::map_constants::{
-    MAP_WIDTH,
-    MAP_HEIGHT,
-};
-use map::Map;
-use graphic_controller::GraphicController;
 
 fn window_conf() -> Conf {
     Conf {
@@ -29,23 +25,16 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut map = Map::new(MAP_WIDTH, MAP_HEIGHT);
-    let mut i: u32 = 0;
-    // map.change_field_color(1, 9, RED); // Grain under
-    // map.change_field_color(1, 8, RED); // Grain above
-    
-    // map.change_field_color(3, 9, RED); // left Grain above
-    // map.change_field_color(3, 8, RED); // left Grain above
+    let mut gc: GameController = GameController::new();
+    gc.init_game();
     loop {
-        GraphicController::draw_fields(map.get_fields_to_draw()).await;
-        map.tick();
-        if i % 20 == 0 {
-            map.change_field_color(50, 0, RED);
-            // map.change_field_color(50, 1, RED);
-            // map.change_field_color(51, 0, RED);
-            // map.change_field_color(51, 1, RED);
+        gc.tick().await;
+        if is_key_down(KeyCode::D) {
+            gc.do_move(KeyCode::D)
         }
-        i += 1;
+        if is_key_down(KeyCode::A) {
+            gc.do_move(KeyCode::A)
+        }
     }
 }
 
