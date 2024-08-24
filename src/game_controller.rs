@@ -30,18 +30,17 @@ impl GameController {
         
         GraphicController::flush().await;
         
+        self.block_controller.tick(&mut self.map);
         self.map.tick();
-        self.block_controller.tick();
-
     }
 
     pub fn do_move(&mut self, key: KeyCode) {
         match key {
-            KeyCode::D => self.block_controller.move_right(),
-            KeyCode::A => self.block_controller.move_left(),
-            KeyCode::S => self.block_controller.move_down(),
-            _ => ()
-        }
+            KeyCode::D => self.block_controller.move_right(&self.map),
+            KeyCode::A => self.block_controller.move_left(&self.map),
+            KeyCode::S => self.block_controller.move_down(&self.map),
+            _ => false,
+        };
     }
 }
 

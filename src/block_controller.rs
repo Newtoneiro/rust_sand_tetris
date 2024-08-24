@@ -1,4 +1,4 @@
-use crate::{block::{Block, BlockType}, constants::{block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS}, colors::RED, map_constants::{MAP_HEIGHT, MAP_WIDTH}}};
+use crate::{block::{Block, BlockType}, constants::{block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS}, colors::RED, map_constants::{MAP_HEIGHT, MAP_WIDTH}}, map::Map};
 use bounded_vec_deque::BoundedVecDeque;
 use macroquad::color::Color;
 use rand::Rng;
@@ -25,6 +25,7 @@ impl BlockController {
         self.color_queue.push_front(
             BlockController::generate_random_color()
         );
+        self.block_center_pos = BLOCK_STARTING_POS;
     }
 
     fn generate_random_block() -> Block {
@@ -41,61 +42,31 @@ impl BlockController {
         }
     }
 
-    pub fn move_down(&mut self) {
-        if self.bottom_of_cur_block() <= MAP_HEIGHT {
-            self.block_center_pos.1 += 1
+    pub fn move_down(&mut self, map: &Map) -> bool {
+        if map.can_move_down(&self.get_current_block().get_schema(), self.block_center_pos) {
+            self.block_center_pos.1 += 1;
+            return true
         }
+
+        return false
     }
 
-    fn bottom_of_cur_block(&self) -> i32 {
-        if self.block_queue.len() == 0 {
-            return self.block_center_pos.1
+    pub fn move_right(&mut self, map: &Map) -> bool {
+        if map.can_move_right(&self.get_current_block().get_schema(), self.block_center_pos) {
+            self.block_center_pos.0 += 1;
+            return true
         }
 
-        let bottom_most_box: (i8, i8) = self.block_queue.get(0).unwrap().get_schema()
-            .into_iter()
-            .max_by_key(|schema_box| {schema_box.1})
-            .unwrap();
-
-        self.block_center_pos.1 + (bottom_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE
+        return false
     }
 
-    pub fn move_right(&mut self) {
-        if self.right_of_cur_block() <= MAP_WIDTH {
-            self.block_center_pos.0 += 1
-        }
-    }
-
-    fn right_of_cur_block(&self) -> i32 {
-        if self.block_queue.len() == 0 {
-            return self.block_center_pos.1
+    pub fn move_left(&mut self, map: &Map) -> bool {
+        if map.can_move_left(&self.get_current_block().get_schema(), self.block_center_pos) {
+            self.block_center_pos.0 -= 1;
+            return true
         }
 
-        let right_most_box: (i8, i8) = self.block_queue.get(0).unwrap().get_schema()
-            .into_iter()
-            .max_by_key(|schema_box| {schema_box.0})
-            .unwrap();
-
-        self.block_center_pos.0 + (right_most_box.0 as i32 + 1) * BLOCK_CHUNK_SIDE
-    }
-
-    pub fn move_left(&mut self) {
-        if self.left_of_cur_block() >= 0 {
-            self.block_center_pos.0 -= 1
-        }
-    }
-
-    fn left_of_cur_block(&self) -> i32 {
-        if self.block_queue.len() == 0 {
-            return self.block_center_pos.1
-        }
-
-        let bottom_most_box: (i8, i8) = self.get_current_block().get_schema()
-            .into_iter()
-            .min_by_key(|schema_box| {schema_box.0})
-            .unwrap();
-
-        self.block_center_pos.0 + bottom_most_box.0 as i32 * BLOCK_CHUNK_SIDE
+        return false
     }
 
     fn get_current_block(&self) -> &Block {
@@ -119,8 +90,17 @@ impl BlockController {
         (output, color)
     }
 
-    pub fn tick(&mut self) {
-        self.move_down();
+    pub fn tick(&mut self, map: &mut Map) {
+        let block_moving = self.move_down(map);
+        if !block_moving {
+            map.spawn_block(
+                &self.get_current_block().get_schema(),
+                self.get_current_color(),
+                self.block_center_pos,
+            );
+            self.get_new_block();
+            println!("{}", self.block_queue.len());
+        }
     }
 }
 
@@ -140,9 +120,10 @@ mod test {
     #[test]
     fn block_controller_move_down() {
         let mut bc: BlockController = BlockController::new();
+        let map: Map = Map::new(200, 400);
         let starting_pos = BLOCK_STARTING_POS;
 
-        bc.move_down();
+        bc.move_down(&map);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0, starting_pos.1 + 1));
     }
@@ -164,9 +145,10 @@ mod test {
     #[test]
     fn block_controller_move_right() {
         let mut bc: BlockController = BlockController::new();
+        let map: Map = Map::new(200, 400);
         let starting_pos = BLOCK_STARTING_POS;
 
-        bc.move_right();
+        bc.move_right(&map);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 + 1, starting_pos.1));
     }
@@ -174,9 +156,10 @@ mod test {
     #[test]
     fn block_controller_move_left() {
         let mut bc: BlockController = BlockController::new();
+        let map: Map = Map::new(200, 400);
         let starting_pos = BLOCK_STARTING_POS;
 
-        bc.move_left();
+        bc.move_left(&map);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 - 1, starting_pos.1));
     }

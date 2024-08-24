@@ -1,7 +1,9 @@
 use macroquad::color::Color;
 use rand::Rng;
 
+use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
+use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
 
 pub struct Map {
@@ -28,6 +30,13 @@ impl Map {
             }
         };
         grid
+    }
+
+    pub fn add_field(&mut self, x: i32, y: i32, color: Color) {
+        match self.get_field(x, y) {
+            Some(_) => self.grid[y as usize][x as usize].set_color(color),
+            None => (),
+        };
     }
 
     pub fn get_field(&self, x: i32, y: i32) -> Option<&Field> {
@@ -118,6 +127,74 @@ impl Map {
                 (x, y)
             }
             Some(_) | None => (x, y),
+        }
+    }
+
+    pub fn can_move_down(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        if self.is_block_coliding_bottom_border(schema, (center_pos.0, center_pos.1 + 1)) {
+            return false
+        }
+
+        true
+    }
+
+    pub fn can_move_left(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        if self.is_block_coliding_left_border(schema, (center_pos.0 - 1, center_pos.1)) {
+            return false
+        }
+
+        true
+    }
+
+    pub fn can_move_right(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        if self.is_block_coliding_right_border(schema, (center_pos.0 + 1, center_pos.1)) {
+            return false
+        }
+
+        true
+    }
+
+    fn is_block_coliding_bottom_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        let bottom_most_box: (i8, i8) = *schema
+            .into_iter()
+            .max_by_key(|schema_box| {schema_box.1})
+            .unwrap();
+        let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
+
+        bottom_border > MAP_HEIGHT
+    }
+
+    fn is_block_coliding_left_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        let bottom_most_box: (i8, i8) = *schema
+            .into_iter()
+            .min_by_key(|schema_box| {schema_box.0})
+            .unwrap();
+
+        let left_border = center_pos.0 + bottom_most_box.0 as i32 * BLOCK_CHUNK_SIDE;
+
+        left_border < 0
+    }
+
+    fn is_block_coliding_right_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        let right_most_box: (i8, i8) = *schema
+            .into_iter()
+            .max_by_key(|schema_box| {schema_box.0})
+            .unwrap();
+
+        let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * BLOCK_CHUNK_SIDE;
+
+        right_border > MAP_WIDTH
+    }
+
+    pub fn spawn_block(&mut self, schema: &Vec<(i8, i8)>, color: &Color, center_pos: (i32, i32)) {
+        for block_box in schema {
+            let x: i32 = center_pos.0 + block_box.0 as i32 * BLOCK_CHUNK_SIDE;
+            let y: i32 = center_pos.1 + block_box.1 as i32 * BLOCK_CHUNK_SIDE;
+            for x_offset in 0..=BLOCK_CHUNK_SIDE {
+                for y_offset in 0..=BLOCK_CHUNK_SIDE {
+                    self.add_field(x + x_offset, y + y_offset, *color);
+                }
+            }
         }
     }
 }
