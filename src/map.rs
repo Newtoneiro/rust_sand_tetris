@@ -133,6 +133,8 @@ impl Map {
     pub fn can_move_down(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_bottom_border(schema, (center_pos.0, center_pos.1 + 1)) {
             return false
+        } else if self.is_block_coliding_with_sand(schema, (center_pos.0, center_pos.1 + 1)) {
+            return false
         }
 
         true
@@ -140,6 +142,8 @@ impl Map {
 
     pub fn can_move_left(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_left_border(schema, (center_pos.0 - 1, center_pos.1)) {
+            return false
+        } else if self.is_block_coliding_with_sand(schema, (center_pos.0 - 1, center_pos.1)) {
             return false
         }
 
@@ -149,9 +153,27 @@ impl Map {
     pub fn can_move_right(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_right_border(schema, (center_pos.0 + 1, center_pos.1)) {
             return false
+        } else if self.is_block_coliding_with_sand(schema, (center_pos.0 + 1, center_pos.1)) {
+            return false
         }
 
         true
+    }
+
+    pub fn can_rotate(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        if self.is_block_coliding_with_any_border(schema, center_pos) {
+            return false
+        } else if self.is_block_coliding_with_sand(schema, center_pos) {
+            return false
+        }
+
+        true
+    }
+
+    fn is_block_coliding_with_any_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        self.is_block_coliding_bottom_border(schema, center_pos) ||
+            self.is_block_coliding_left_border(schema, center_pos) || 
+                self.is_block_coliding_right_border(schema, center_pos)
     }
 
     fn is_block_coliding_bottom_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
@@ -186,16 +208,42 @@ impl Map {
         right_border > MAP_WIDTH
     }
 
+    fn is_block_coliding_with_sand(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        for (x, y) in self.get_fields_from_schema(schema, center_pos) {
+            let result: bool = match self.get_field(x, y) {
+                Some(field) => {
+                    !field.is_empty()
+                },
+                None => false,
+            };
+            if result {
+                return true
+            }
+        };
+
+        false
+    }
+
     pub fn spawn_block(&mut self, schema: &Vec<(i8, i8)>, color: &Color, center_pos: (i32, i32)) {
+        for (x, y) in self.get_fields_from_schema(schema, center_pos) {
+            self.add_field(x, y, *color);
+        }
+    }
+
+    fn get_fields_from_schema(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> Vec<(i32, i32)> {
+        let mut output = Vec::new();
+        
         for block_box in schema {
             let x: i32 = center_pos.0 + block_box.0 as i32 * BLOCK_CHUNK_SIDE;
             let y: i32 = center_pos.1 + block_box.1 as i32 * BLOCK_CHUNK_SIDE;
             for x_offset in 0..=BLOCK_CHUNK_SIDE {
                 for y_offset in 0..=BLOCK_CHUNK_SIDE {
-                    self.add_field(x + x_offset, y + y_offset, *color);
+                    output.push((x + x_offset, y + y_offset));
                 }
             }
         }
+
+        output
     }
 }
 

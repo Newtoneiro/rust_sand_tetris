@@ -69,8 +69,44 @@ impl BlockController {
         return false
     }
 
+    pub fn rotate_clockwise(&mut self, map: &Map) -> bool {
+        if map.can_rotate(&self.get_current_block_rotated_clockwise().get_schema(), self.block_center_pos) {
+            self.get_current_block_mut().rotate_clockwise();
+            return true
+        }
+
+        return false
+    }
+
+    pub fn rotate_counter_clockwise(&mut self, map: &Map) -> bool {
+        if map.can_rotate(&self.get_current_block_rotated_c_clockwise().get_schema(), self.block_center_pos) {
+            self.get_current_block_mut().rotate_counter_clockwise();
+            return true
+        }
+
+        return false
+    }
+
     fn get_current_block(&self) -> &Block {
         self.block_queue.get(0).unwrap()
+    }
+
+    fn get_current_block_mut(&mut self) -> &mut Block {
+        self.block_queue.get_mut(0).unwrap()
+    }
+
+    fn get_current_block_rotated_clockwise(&self) -> Block {
+        let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
+        rotated_block.rotate_clockwise();
+    
+        return rotated_block;
+    }
+
+    fn get_current_block_rotated_c_clockwise(&self) -> Block {
+        let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
+        rotated_block.rotate_counter_clockwise();
+    
+        return rotated_block;
     }
 
     fn get_current_color(&self) -> &Color {
@@ -99,7 +135,6 @@ impl BlockController {
                 self.block_center_pos,
             );
             self.get_new_block();
-            println!("{}", self.block_queue.len());
         }
     }
 }

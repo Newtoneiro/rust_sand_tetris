@@ -38,7 +38,8 @@ impl GameController {
         match key {
             KeyCode::D => self.block_controller.move_right(&self.map),
             KeyCode::A => self.block_controller.move_left(&self.map),
-            KeyCode::S => self.block_controller.move_down(&self.map),
+            KeyCode::E => self.block_controller.rotate_clockwise(&self.map),
+            KeyCode::Q => self.block_controller.rotate_counter_clockwise(&self.map),
             _ => false,
         };
     }

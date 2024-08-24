@@ -1,5 +1,6 @@
 use crate::constants::block_schemas;
 
+#[derive(Clone)]
 pub struct Block {
     schema: Vec<(i8, i8)>,
     rotation: u8, 
