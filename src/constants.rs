@@ -28,12 +28,30 @@ pub(crate) mod colors {
     use macroquad::color::Color;
 
     pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.10196, 0.0941, 0.1058, 1.0);
-    pub(crate) const FONT_COLOR: Color = Color::new(0.30196, 0.2941, 0.3058, 1.0);
+    
+    pub(crate) const COLOR_VAR_WEIGHTS: [f32; 3] = [0.7, 0.25, 0.05];
+    
+    pub(crate) const WHITE: Color = Color::new(0.9196, 0.8941, 0.9058, 1.0);
 
     pub(crate) const RED: Color = Color::new(0.6392, 0.0862, 0.1294, 1.0);
+    pub(crate) const RED_LIGHT: Color = Color::new(0.6509, 0.2431, 0.2784, 1.0);
+    pub(crate) const RED_DARK: Color = Color::new(0.3960, 0.0588, 0.0901, 1.0);
+    pub(crate) const RED_VAR: [Color; 3] = [RED, RED_LIGHT, RED_DARK];
+
     pub(crate) const BLUE: Color = Color::new(0.0039, 0.4352, 0.7254, 1.0);
-    pub(crate) const GREEN: Color = Color::new(0.4980, 0.6980, 0.5215, 1.0);
+    pub(crate) const BLUE_LIGHT: Color = Color::new(0.2549, 0.6078, 0.8588, 1.0);
+    pub(crate) const BLUE_DARK: Color = Color::new(0.0000, 0.2588, 0.4862, 1.0);
+    pub(crate) const BLUE_VAR: [Color; 3] = [BLUE, BLUE_LIGHT, BLUE_DARK];
+
+    pub(crate) const GREEN: Color = Color::new(0.2980, 0.6862, 0.3137, 1.0);
+    pub(crate) const GREEN_LIGHT: Color = Color::new(0.4549, 0.7843, 0.4666, 1.0);
+    pub(crate) const GREEN_DARK: Color = Color::new(0.2078, 0.4862, 0.2196, 1.0);
+    pub(crate) const GREEN_VAR: [Color; 3] = [GREEN, GREEN_LIGHT, GREEN_DARK];
+
     pub(crate) const YELLOW: Color = Color::new(0.8588, 0.6, 0.3529, 1.0);
+    pub(crate) const YELLOW_LIGHT: Color = Color::new(0.9607, 0.7490, 0.5294, 1.0);
+    pub(crate) const YELLOW_DARK: Color = Color::new(0.7372, 0.4862, 0.2588, 1.0);
+    pub(crate) const YELLOW_VAR: [Color; 3] = [YELLOW, YELLOW_LIGHT, YELLOW_DARK];
 }
 
 pub(crate) mod block_constants {
@@ -61,4 +79,5 @@ pub(crate) mod font_constants {
     pub(crate) const GAME_OVER_BOTTOM_TEXT: &str = "press (R) to restart...";
     pub(crate) const GAME_OVER_FONT_SIZE: u16 = 50;
     pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 20;
+    pub(crate) const GAME_OVER_OUTLINE_WIDTH: u16 = 2;
 }

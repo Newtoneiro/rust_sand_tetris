@@ -214,10 +214,10 @@ impl BlockController {
     }
 
     pub fn settle_block(&mut self, map: &mut Map) {
+        let drawing_schema_color: (Vec<(i32, i32)>, Color) = self.get_block_to_draw();
         map.spawn_block(
-            &self.get_current_block().get_schema(),
-            self.get_current_color(),
-            self.block_center_pos,
+            drawing_schema_color.0,
+            drawing_schema_color.1,
         );
         self.get_new_block();
     }

@@ -5,8 +5,10 @@ use rand::Rng;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
+use crate::constants::colors::RED_VAR;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
+use crate::graphic_controller::GraphicController;
 
 pub struct Map {
     width: i32,
@@ -299,9 +301,9 @@ impl Map {
         false
     }
 
-    pub fn spawn_block(&mut self, schema: &Vec<(i8, i8)>, color: &Color, center_pos: (i32, i32)) {
-        for (x, y) in self.get_fields_from_schema(schema, center_pos) {
-            self.add_field(x, y, *color);
+    pub fn spawn_block(&mut self, schema: Vec<(i32, i32)>, color: Color) {
+        for (x, y, color) in GraphicController::get_skin_for_schema(schema, color) {
+            self.add_field(x, y, color);
         }
     }
 

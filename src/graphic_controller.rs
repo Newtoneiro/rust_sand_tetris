@@ -1,8 +1,12 @@
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
-use crate::constants::colors::BACKGROUND_COLOR;
+use crate::constants::colors::{
+    BACKGROUND_COLOR, BLUE, BLUE_VAR, COLOR_VAR_WEIGHTS, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR
+};
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
 use crate::field::Field;
 use macroquad::prelude::*;
+use ::rand::distributions::WeightedIndex;
+use ::rand::prelude::Distribution;
 
 pub struct GraphicController {}
 
@@ -31,16 +35,53 @@ impl GraphicController {
 
     pub fn draw_block(block_schema_color: (Vec<(i32, i32)>, Color)) {
         let (block_schema, color) = block_schema_color;
-        for (x, y) in block_schema {
+        for (x, y, color) in GraphicController::get_skin_for_schema(block_schema, color) {
             let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y);
             draw_rectangle(
                 win_x,
                 win_y,
-                (BLOCK_CHUNK_SIDE * GRAIN_SIDE_SIZE) as f32,
-                (BLOCK_CHUNK_SIDE * GRAIN_SIDE_SIZE) as f32,
+                GRAIN_SIDE_SIZE as f32,
+                GRAIN_SIDE_SIZE as f32,
                 color,
             );
         }
+    }
+
+    pub fn get_skin_for_schema(block_schema: Vec<(i32, i32)>, color: Color) -> Vec<(i32, i32, Color)> {
+        let mut output = Vec::new();
+        let color_variations: [Color; 3] = match color {
+            RED => RED_VAR,
+            BLUE => BLUE_VAR,
+            GREEN => GREEN_VAR,
+            YELLOW => YELLOW_VAR,
+            _ => [color.clone(), color.clone(), color.clone()],
+        };
+
+        for (x, y) in block_schema {
+            for x_offset in 0..=BLOCK_CHUNK_SIDE {
+                for y_offset in 0..=BLOCK_CHUNK_SIDE {
+                    output.push(
+                        (
+                            x + x_offset,
+                            y + y_offset,
+                            color_variations[GraphicController::hash_function_for_pos(x_offset, y_offset)],
+                        )
+                    );
+                }
+            }
+        }
+
+        output
+    }
+
+    fn hash_function_for_pos(x: i32, y: i32) -> usize {
+        ((x + y) % 3) as usize
+    }
+
+    pub fn draw_text_with_outline(text: &str, x: f32, y: f32, font_size: u16, inner_color: Color, outer_color: Color, border_width: u16) {
+        GraphicController::draw_text(text, x - border_width as f32 / 2.0, y - border_width as f32 / 2.0, font_size, outer_color);
+        GraphicController::draw_text(text, x + border_width as f32 / 2.0, y + border_width as f32 / 2.0, font_size, outer_color);
+        GraphicController::draw_text(text, x, y, font_size, inner_color);
     }
 
     pub fn draw_text(text: &str, x: f32, y: f32, font_size: u16, color: Color) {
