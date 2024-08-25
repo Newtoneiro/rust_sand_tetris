@@ -14,6 +14,13 @@ pub struct Map {
     grid: Vec<Vec<Field>>,
 }
 
+#[derive(PartialEq)]
+pub enum ColisionType {
+    BorderColision,
+    SandColision,
+    NoColision,
+}
+
 impl Map {
     pub fn new(width: i32, height: i32) -> Self {
         let grid = Map::create_grid(width, height);
@@ -154,44 +161,60 @@ impl Map {
         }
     }
 
-    pub fn can_move_down(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    pub fn can_move_down(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> (bool, ColisionType) {
         if self.is_block_coliding_bottom_border(schema, (center_pos.0, center_pos.1 + 1)) {
-            return false;
+            return (false, ColisionType::BorderColision);
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0, center_pos.1 + 1)) {
-            return false;
+            return (false, ColisionType::SandColision);
         }
 
-        true
+        (true, ColisionType::NoColision)
     }
 
-    pub fn can_move_left(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    pub fn can_move_left(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> (bool, ColisionType) {
         if self.is_block_coliding_left_border(schema, (center_pos.0 - 1, center_pos.1)) {
-            return false;
+            return (false, ColisionType::BorderColision);
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0 - 1, center_pos.1)) {
-            return false;
+            return (false, ColisionType::SandColision);
         }
 
-        true
+        (true, ColisionType::NoColision)
     }
 
-    pub fn can_move_right(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    pub fn can_move_right(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> (bool, ColisionType) {
         if self.is_block_coliding_right_border(schema, (center_pos.0 + 1, center_pos.1)) {
-            return false;
+            return (false, ColisionType::BorderColision);
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0 + 1, center_pos.1)) {
-            return false;
+            return (false, ColisionType::SandColision);
         }
 
-        true
+        (true, ColisionType::NoColision)
     }
 
-    pub fn can_rotate(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    pub fn can_rotate(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> (bool, ColisionType) {
         if self.is_block_coliding_with_any_border(schema, center_pos) {
-            return false;
+            return (false, ColisionType::BorderColision);
         } else if self.is_block_coliding_with_sand(schema, center_pos) {
-            return false;
+            return (false, ColisionType::SandColision);
         }
 
-        true
+        (true, ColisionType::NoColision)
     }
 
     fn is_block_coliding_with_any_border(

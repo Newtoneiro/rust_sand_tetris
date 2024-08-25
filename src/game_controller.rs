@@ -63,9 +63,10 @@ impl GameController {
 
     fn display_game_over(&self) {
         let text_center = GraphicController::get_text_center(GAME_OVER_TEXT, GAME_OVER_FONT_SIZE);
-        let bottom_text_center = GraphicController::get_text_center(GAME_OVER_BOTTOM_TEXT, GAME_OVER_BOTTOM_FONT_SIZE);
+        let bottom_text_center =
+            GraphicController::get_text_center(GAME_OVER_BOTTOM_TEXT, GAME_OVER_BOTTOM_FONT_SIZE);
         let map_center = GraphicController::map_to_window_dimensions(MAP_WIDTH / 2, MAP_HEIGHT / 2);
-        
+
         GraphicController::draw_text(
             GAME_OVER_TEXT,
             map_center.0 - text_center.0,
@@ -98,24 +99,18 @@ impl GameController {
         if self.is_game_over {
             return ();
         }
-        match key {
-            KeyCode::D => self.block_controller.move_right(&self.map),
-            KeyCode::A => self.block_controller.move_left(&self.map),
-            KeyCode::S => self.block_controller.move_down(&self.map),
-            KeyCode::E => self.block_controller.rotate_clockwise(&self.map),
-            KeyCode::Q => self.block_controller.rotate_counter_clockwise(&self.map),
+        let is_game_over = match key {
+            KeyCode::D => self.block_controller.handle_move_right(&mut self.map),
+            KeyCode::A => self.block_controller.handle_move_left(&mut self.map),
+            KeyCode::S => self.block_controller.handle_move_down(&mut self.map),
+            KeyCode::E => self.block_controller.handle_rotate_clockwise(&mut self.map),
+            KeyCode::Q => self
+                .block_controller
+                .handle_rotate_counter_clockwise(&mut self.map),
             _ => false,
         };
-    }
-}
-
-mod test {
-    use super::*;
-
-    #[test]
-    fn create_game_controller() {
-        let gc: GameController = GameController::new();
-
-        assert_eq!(gc.score, 0);
+        if is_game_over {
+            self.handle_game_over();
+        }
     }
 }

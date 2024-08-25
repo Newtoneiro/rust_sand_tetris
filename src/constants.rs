@@ -39,7 +39,7 @@ pub(crate) mod colors {
 pub(crate) mod block_constants {
     use super::map_constants::MAP_WIDTH;
 
-    pub(crate) const BLOCK_CHUNK_SIDE: i32 = 10;
+    pub(crate) const BLOCK_CHUNK_SIDE: i32 = 20;
     pub(crate) const BLOCK_STARTING_POS: (i32, i32) = (
         MAP_WIDTH / 2 - (BLOCK_CHUNK_SIDE / 2),
         -BLOCK_CHUNK_SIDE * 2,
