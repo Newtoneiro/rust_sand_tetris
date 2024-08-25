@@ -29,9 +29,7 @@ pub(crate) mod colors {
 
     pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.10196, 0.0941, 0.1058, 1.0);
     pub(crate) const BLACK: Color = Color::new(0.0, 0.0, 0.0, 1.0);
-    
-    pub(crate) const COLOR_VAR_WEIGHTS: [f32; 3] = [0.7, 0.25, 0.05];
-    
+
     pub(crate) const WHITE: Color = Color::new(0.9196, 0.8941, 0.9058, 1.0);
 
     pub(crate) const RED: Color = Color::new(0.6392, 0.0862, 0.1294, 1.0);

@@ -5,7 +5,6 @@ use rand::Rng;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
-use crate::constants::colors::RED_VAR;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
 use crate::graphic_controller::GraphicController;

@@ -3,9 +3,10 @@ use macroquad::input::KeyCode;
 use crate::{
     block_controller::BlockController,
     constants::{
-        colors::{BACKGROUND_COLOR, BLACK, WHITE},
+        colors::{BLACK, WHITE},
         font_constants::{
-            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE, GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT
+            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
+            GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT,
         },
         map_constants::{MAP_HEIGHT, MAP_WIDTH},
     },
@@ -74,7 +75,7 @@ impl GameController {
             GAME_OVER_FONT_SIZE,
             BLACK,
             WHITE,
-            GAME_OVER_OUTLINE_WIDTH
+            GAME_OVER_OUTLINE_WIDTH,
         );
         GraphicController::draw_text_with_outline(
             GAME_OVER_BOTTOM_TEXT,
@@ -83,7 +84,7 @@ impl GameController {
             GAME_OVER_BOTTOM_FONT_SIZE,
             BLACK,
             WHITE,
-            GAME_OVER_OUTLINE_WIDTH
+            GAME_OVER_OUTLINE_WIDTH,
         );
     }
 
