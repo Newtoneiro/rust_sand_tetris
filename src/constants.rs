@@ -51,4 +51,5 @@ pub(crate) mod block_schemas {
     pub(crate) const Z_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (1, 0), (1, 1)];
     pub(crate) const REV_Z_BLOCK: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, -1)];
     pub(crate) const I_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (0, 2)];
+    pub(crate) const T_BLOCK: [(i8, i8); 4] = [(0, 0), (-1, 0), (1, 0), (0, -1)];
 }

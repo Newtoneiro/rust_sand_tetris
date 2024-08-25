@@ -34,12 +34,13 @@ impl BlockController {
     }
 
     fn generate_random_block() -> Block {
-        let block_type = match rand::thread_rng().gen_range(0..=6) {
+        let block_type = match rand::thread_rng().gen_range(0..=7) {
             1 => BlockType::LBlock,
             2 => BlockType::RevLBlock,
             3 => BlockType::SquareBlock,
             4 => BlockType::ZBlock,
             5 => BlockType::RevZBlock,
+            6 => BlockType::TBlock,
             _ => BlockType::IBlock,
         };
 

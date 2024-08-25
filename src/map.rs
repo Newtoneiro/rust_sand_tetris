@@ -1,5 +1,7 @@
 use macroquad::color::Color;
 use rand::Rng;
+use rand::thread_rng;
+use rand::seq::SliceRandom;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
@@ -73,18 +75,26 @@ impl Map {
     }
 
     pub fn tick(&mut self) {
+        let row_order: Vec<i32> = self.get_random_row_order();
         for y in (0..self.height).rev() {
-            for x in 0..self.width {
-                if !self.grid[y as usize][x as usize].is_empty() {
-                    let (new_x, new_y) = self.get_new_pos(x, y);
-                    if (new_x, new_y) != (x, y) {
-                        let field_color = self.get_field(x, y).unwrap().get_color();
+            for x in (&row_order).into_iter() {
+                if !self.grid[y as usize][*x as usize].is_empty() {
+                    let (new_x, new_y) = self.get_new_pos(*x, y);
+                    if (new_x, new_y) != (*x, y) {
+                        let field_color = self.get_field(*x, y).unwrap().get_color();
                         self.change_field_color(new_x, new_y, field_color);
-                        self.change_field_color(x, y, BACKGROUND_COLOR);
+                        self.change_field_color(*x, y, BACKGROUND_COLOR);
                     }
                 }
             }
         };
+    }
+
+    fn get_random_row_order(&self) -> Vec<i32> {
+        let mut row_order: Vec<i32> = (0..self.width).collect();
+        row_order.shuffle(&mut thread_rng());
+
+        row_order
     }
 
     fn get_new_pos(&self, x: i32, y: i32) -> (i32, i32) {

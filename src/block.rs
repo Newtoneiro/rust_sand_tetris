@@ -15,6 +15,7 @@ pub enum BlockType {
     ZBlock,
     RevZBlock,
     IBlock,
+    TBlock,
 }
 
 const NOT_ROTABLE_TYPES: [BlockType; 1] = [BlockType::SquareBlock];
@@ -28,6 +29,7 @@ impl Block {
             BlockType::ZBlock => block_schemas::Z_BLOCK,
             BlockType::RevZBlock => block_schemas::REV_Z_BLOCK,
             BlockType::IBlock => block_schemas::I_BLOCK,
+            BlockType::TBlock => block_schemas::T_BLOCK,
         };
         Block { schema: Vec::from(schema), rotation: 0, block_type }
     }
