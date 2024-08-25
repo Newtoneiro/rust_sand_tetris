@@ -15,6 +15,7 @@ fn window_conf() -> Conf {
         window_title: WINDOW_TITLE.to_string(),
         window_width: WINDOW_WIDTH as i32,
         window_height: WINDOW_HEIGHT as i32,
+        window_resizable: false,
         ..Default::default() // Use default values for other settings
     }
 }

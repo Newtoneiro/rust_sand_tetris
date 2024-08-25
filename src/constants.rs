@@ -77,12 +77,12 @@ pub(crate) mod block_skins {
     pub(crate) const SKIN_SIDE: usize = 6;
     // 0 - normal, 1 - light, 2 - dark
     pub(crate) const NATURAL: [[usize; SKIN_SIDE]; SKIN_SIDE] = [
-        [2, 0, 1, 0, 0, 1],
-        [2, 0, 0, 2, 0, 2],
-        [0, 0, 2, 0, 0, 0],
-        [0, 2, 1, 1, 0, 2],
-        [0, 0, 2, 2, 2, 1],
-        [0, 2, 0, 0, 2, 0],
+        [2, 1, 0, 0, 0, 2],
+        [2, 0, 0, 1, 1, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 2, 0, 0, 2, 1],
+        [1, 1, 0, 0, 0, 1],
+        [0, 0, 2, 2, 0, 0],
     ];
 }
 
