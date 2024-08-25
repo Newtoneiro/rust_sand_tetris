@@ -35,6 +35,9 @@ async fn main() {
         if is_key_down(KeyCode::A) {
             gc.do_move(KeyCode::A)
         }
+        if is_key_down(KeyCode::S) {
+            gc.do_move(KeyCode::S)
+        }
         if is_key_pressed(KeyCode::E) {
             gc.do_move(KeyCode::E)
         }
