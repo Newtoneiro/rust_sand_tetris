@@ -28,6 +28,7 @@ pub(crate) mod colors {
     use macroquad::color::Color;
 
     pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.10196, 0.0941, 0.1058, 1.0);
+    pub(crate) const BLACK: Color = Color::new(0.0, 0.0, 0.0, 1.0);
     
     pub(crate) const COLOR_VAR_WEIGHTS: [f32; 3] = [0.7, 0.25, 0.05];
     
@@ -57,7 +58,7 @@ pub(crate) mod colors {
 pub(crate) mod block_constants {
     use super::map_constants::MAP_WIDTH;
 
-    pub(crate) const BLOCK_CHUNK_SIDE: i32 = 20;
+    pub(crate) const BLOCK_CHUNK_SIDE: i32 = 10;
     pub(crate) const BLOCK_STARTING_POS: (i32, i32) = (
         MAP_WIDTH / 2 - (BLOCK_CHUNK_SIDE / 2),
         -BLOCK_CHUNK_SIDE * 2,
@@ -74,10 +75,23 @@ pub(crate) mod block_schemas {
     pub(crate) const T_BLOCK: [(i8, i8); 4] = [(0, 0), (-1, 0), (1, 0), (0, -1)];
 }
 
+pub(crate) mod block_skins {
+    pub(crate) const SKIN_SIDE: usize = 6;
+    // 0 - normal, 1 - light, 2 - dark
+    pub(crate) const NATURAL: [[usize; SKIN_SIDE]; SKIN_SIDE] = [
+        [2, 0, 1, 0, 0, 1],
+        [2, 0, 0, 2, 0, 2],
+        [0, 0, 2, 0, 0, 0],
+        [0, 2, 1, 1, 0, 2],
+        [0, 0, 2, 2, 2, 1],
+        [0, 2, 0, 0, 2, 0],
+    ];
+}
+
 pub(crate) mod font_constants {
     pub(crate) const GAME_OVER_TEXT: &str = "Game Over";
     pub(crate) const GAME_OVER_BOTTOM_TEXT: &str = "press (R) to restart...";
     pub(crate) const GAME_OVER_FONT_SIZE: u16 = 50;
-    pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 20;
+    pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 30;
     pub(crate) const GAME_OVER_OUTLINE_WIDTH: u16 = 2;
 }

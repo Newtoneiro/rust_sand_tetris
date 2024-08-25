@@ -1,4 +1,5 @@
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
+use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
 use crate::constants::colors::{
     BACKGROUND_COLOR, BLUE, BLUE_VAR, COLOR_VAR_WEIGHTS, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR
 };
@@ -64,7 +65,7 @@ impl GraphicController {
                         (
                             x + x_offset,
                             y + y_offset,
-                            color_variations[GraphicController::hash_function_for_pos(x_offset, y_offset)],
+                            color_variations[GraphicController::get_block_skin(x_offset, y_offset)],
                         )
                     );
                 }
@@ -74,8 +75,10 @@ impl GraphicController {
         output
     }
 
-    fn hash_function_for_pos(x: i32, y: i32) -> usize {
-        ((x + y) % 3) as usize
+    fn get_block_skin(x: i32, y: i32) -> usize {
+        let x_normalized = x as usize % SKIN_SIDE;
+        let y_normalized = y as usize % SKIN_SIDE;
+        NATURAL[y_normalized][x_normalized]
     }
 
     pub fn draw_text_with_outline(text: &str, x: f32, y: f32, font_size: u16, inner_color: Color, outer_color: Color, border_width: u16) {

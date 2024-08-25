@@ -3,7 +3,7 @@ use macroquad::input::KeyCode;
 use crate::{
     block_controller::BlockController,
     constants::{
-        colors::{BACKGROUND_COLOR, WHITE},
+        colors::{BACKGROUND_COLOR, BLACK, WHITE},
         font_constants::{
             GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE, GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT
         },
@@ -72,7 +72,7 @@ impl GameController {
             map_center.0 - text_center.0,
             map_center.1 + text_center.1,
             GAME_OVER_FONT_SIZE,
-            BACKGROUND_COLOR,
+            BLACK,
             WHITE,
             GAME_OVER_OUTLINE_WIDTH
         );
@@ -81,7 +81,7 @@ impl GameController {
             map_center.0 - bottom_text_center.0,
             map_center.1 + text_center.1 + 2.0 * bottom_text_center.1,
             GAME_OVER_BOTTOM_FONT_SIZE,
-            BACKGROUND_COLOR,
+            BLACK,
             WHITE,
             GAME_OVER_OUTLINE_WIDTH
         );
