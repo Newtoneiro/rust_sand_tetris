@@ -1,18 +1,14 @@
-mod constants;
-mod map;
 mod block;
-mod field;
-mod graphic_controller;
 mod block_controller;
+mod constants;
+mod field;
 mod game_controller;
+mod graphic_controller;
+mod map;
 
+use constants::window_constants::{WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH};
 use game_controller::GameController;
 use macroquad::prelude::*;
-use constants::window_constants::{
-    WINDOW_TITLE,
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-};
 
 fn window_conf() -> Conf {
     Conf {
@@ -26,7 +22,7 @@ fn window_conf() -> Conf {
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut gc: GameController = GameController::new();
-    gc.init_game();
+    gc.reset_game();
     loop {
         gc.tick().await;
         if is_key_down(KeyCode::D) {
@@ -43,6 +39,9 @@ async fn main() {
         }
         if is_key_pressed(KeyCode::Q) {
             gc.do_move(KeyCode::Q)
+        }
+        if is_key_pressed(KeyCode::R) {
+            gc.reset_game()
         }
     }
 }

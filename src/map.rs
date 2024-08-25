@@ -1,7 +1,7 @@
 use macroquad::color::Color;
-use rand::Rng;
-use rand::thread_rng;
 use rand::seq::SliceRandom;
+use rand::thread_rng;
+use rand::Rng;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
@@ -11,14 +11,18 @@ use crate::field::Field;
 pub struct Map {
     width: i32,
     height: i32,
-    grid: Vec<Vec<Field>>
+    grid: Vec<Vec<Field>>,
 }
 
 impl Map {
     pub fn new(width: i32, height: i32) -> Self {
         let grid = Map::create_grid(width, height);
 
-        Map { width, height, grid }
+        Map {
+            width,
+            height,
+            grid,
+        }
     }
 
     fn create_grid(width: i32, height: i32) -> Vec<Vec<Field>> {
@@ -26,11 +30,9 @@ impl Map {
         for y in 0..height {
             grid.push(Vec::new());
             for x in 0..width {
-                grid[y as usize].push(
-                    Field::new(x, y, BACKGROUND_COLOR)
-                );
+                grid[y as usize].push(Field::new(x, y, BACKGROUND_COLOR));
             }
-        };
+        }
         grid
     }
 
@@ -43,14 +45,14 @@ impl Map {
 
     pub fn get_field(&self, x: i32, y: i32) -> Option<&Field> {
         if !self.check_coords_in_bounds(x, y) {
-            return None
+            return None;
         }
         Some(&self.grid[y as usize][x as usize])
     }
 
     pub fn change_field_color(&mut self, x: i32, y: i32, new_color: Color) {
         if !self.check_coords_in_bounds(x, y) {
-            return ()
+            return ();
         }
         self.grid[y as usize][x as usize].set_color(new_color);
     }
@@ -70,7 +72,7 @@ impl Map {
                     output.push(self.get_field(x, y).unwrap().clone())
                 }
             }
-        };
+        }
         output
     }
 
@@ -87,7 +89,7 @@ impl Map {
                     }
                 }
             }
-        };
+        }
     }
 
     fn get_random_row_order(&self) -> Vec<i32> {
@@ -104,36 +106,48 @@ impl Map {
 
         match field_down {
             Some(field) if field.is_empty() => (x, y + 1), // No grain below
-            Some(_) if field_down_left.is_some() && field_down_right.is_some() => { // If grain below
-                if field_down_left.unwrap().is_empty() && !field_down_right.unwrap().is_empty() { // If right down field empty
+            Some(_) if field_down_left.is_some() && field_down_right.is_some() => {
+                // If grain below
+                if field_down_left.unwrap().is_empty() && !field_down_right.unwrap().is_empty() {
+                    // If right down field empty
                     (x - 1, y + 1)
-                } else if !field_down_left.unwrap().is_empty() && field_down_right.unwrap().is_empty() { // If left down field empty
+                } else if !field_down_left.unwrap().is_empty()
+                    && field_down_right.unwrap().is_empty()
+                {
+                    // If left down field empty
                     (x + 1, y + 1)
-                } else if field_down_left.unwrap().is_empty() && field_down_right.unwrap().is_empty() { // If both sides empty, choose random
+                } else if field_down_left.unwrap().is_empty()
+                    && field_down_right.unwrap().is_empty()
+                {
+                    // If both sides empty, choose random
                     let go_right: bool = rand::thread_rng().gen_range(0..=1) == 0;
                     match go_right {
                         true => (x + 1, y + 1),
                         false => (x - 1, y + 1),
                     }
-                } else { // Both down sides not empty
+                } else {
+                    // Both down sides not empty
                     (x, y)
                 }
             }
-            Some(_) if field_down_left.is_none() && field_down_right.is_some() => { // left out of bounds
+            Some(_) if field_down_left.is_none() && field_down_right.is_some() => {
+                // left out of bounds
                 if field_down_right.unwrap().is_empty() {
                     (x + 1, y + 1)
                 } else {
                     (x, y)
                 }
             }
-            Some(_) if field_down_left.is_some() && field_down_right.is_none() => { // right out of bounds
+            Some(_) if field_down_left.is_some() && field_down_right.is_none() => {
+                // right out of bounds
                 if field_down_left.unwrap().is_empty() {
                     (x - 1, y + 1)
                 } else {
                     (x, y)
                 }
             }
-            Some(_) if field_down_left.is_none() && field_down_right.is_none() => { // both out of bounds
+            Some(_) if field_down_left.is_none() && field_down_right.is_none() => {
+                // both out of bounds
                 (x, y)
             }
             Some(_) | None => (x, y),
@@ -142,9 +156,9 @@ impl Map {
 
     pub fn can_move_down(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_bottom_border(schema, (center_pos.0, center_pos.1 + 1)) {
-            return false
+            return false;
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0, center_pos.1 + 1)) {
-            return false
+            return false;
         }
 
         true
@@ -152,9 +166,9 @@ impl Map {
 
     pub fn can_move_left(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_left_border(schema, (center_pos.0 - 1, center_pos.1)) {
-            return false
+            return false;
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0 - 1, center_pos.1)) {
-            return false
+            return false;
         }
 
         true
@@ -162,9 +176,9 @@ impl Map {
 
     pub fn can_move_right(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_right_border(schema, (center_pos.0 + 1, center_pos.1)) {
-            return false
+            return false;
         } else if self.is_block_coliding_with_sand(schema, (center_pos.0 + 1, center_pos.1)) {
-            return false
+            return false;
         }
 
         true
@@ -172,34 +186,60 @@ impl Map {
 
     pub fn can_rotate(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         if self.is_block_coliding_with_any_border(schema, center_pos) {
-            return false
+            return false;
         } else if self.is_block_coliding_with_sand(schema, center_pos) {
-            return false
+            return false;
         }
 
         true
     }
 
-    fn is_block_coliding_with_any_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
-        self.is_block_coliding_bottom_border(schema, center_pos) ||
-            self.is_block_coliding_left_border(schema, center_pos) || 
-                self.is_block_coliding_right_border(schema, center_pos)
+    fn is_block_coliding_with_any_border(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> bool {
+        self.is_block_coliding_bottom_border(schema, center_pos)
+            || self.is_block_coliding_left_border(schema, center_pos)
+            || self.is_block_coliding_right_border(schema, center_pos)
     }
 
-    fn is_block_coliding_bottom_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    fn is_block_coliding_upper_border(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> bool {
+        let upper_most_box: (i8, i8) = *schema
+            .into_iter()
+            .min_by_key(|schema_box| schema_box.1)
+            .unwrap();
+        let upper_border = center_pos.1 + (upper_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
+
+        upper_border < 0
+    }
+
+    fn is_block_coliding_bottom_border(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> bool {
         let bottom_most_box: (i8, i8) = *schema
             .into_iter()
-            .max_by_key(|schema_box| {schema_box.1})
+            .max_by_key(|schema_box| schema_box.1)
             .unwrap();
         let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
 
         bottom_border > MAP_HEIGHT
     }
 
-    fn is_block_coliding_left_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    fn is_block_coliding_left_border(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> bool {
         let bottom_most_box: (i8, i8) = *schema
             .into_iter()
-            .min_by_key(|schema_box| {schema_box.0})
+            .min_by_key(|schema_box| schema_box.0)
             .unwrap();
 
         let left_border = center_pos.0 + bottom_most_box.0 as i32 * BLOCK_CHUNK_SIDE;
@@ -207,10 +247,14 @@ impl Map {
         left_border < 0
     }
 
-    fn is_block_coliding_right_border(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+    fn is_block_coliding_right_border(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> bool {
         let right_most_box: (i8, i8) = *schema
             .into_iter()
-            .max_by_key(|schema_box| {schema_box.0})
+            .max_by_key(|schema_box| schema_box.0)
             .unwrap();
 
         let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * BLOCK_CHUNK_SIDE;
@@ -221,15 +265,13 @@ impl Map {
     fn is_block_coliding_with_sand(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
         for (x, y) in self.get_fields_from_schema(schema, center_pos) {
             let result: bool = match self.get_field(x, y) {
-                Some(field) => {
-                    !field.is_empty()
-                },
+                Some(field) => !field.is_empty(),
                 None => false,
             };
             if result {
-                return true
+                return true;
             }
-        };
+        }
 
         false
     }
@@ -240,9 +282,13 @@ impl Map {
         }
     }
 
-    fn get_fields_from_schema(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> Vec<(i32, i32)> {
+    fn get_fields_from_schema(
+        &self,
+        schema: &Vec<(i8, i8)>,
+        center_pos: (i32, i32),
+    ) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
-        
+
         for block_box in schema {
             let x: i32 = center_pos.0 + block_box.0 as i32 * BLOCK_CHUNK_SIDE;
             let y: i32 = center_pos.1 + block_box.1 as i32 * BLOCK_CHUNK_SIDE;
@@ -254,6 +300,14 @@ impl Map {
         }
 
         output
+    }
+
+    pub fn is_game_over(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
+        self.is_block_coliding_upper_border(schema, center_pos)
+    }
+
+    pub fn clear(&mut self) {
+        self.grid = Map::create_grid(self.width, self.height);
     }
 }
 
@@ -344,11 +398,11 @@ mod test {
 
         let possible_positions: [Color; 2] = [
             map.get_field(4, 9).unwrap().get_color(),
-            map.get_field(6, 9).unwrap().get_color()
+            map.get_field(6, 9).unwrap().get_color(),
         ];
         assert!(
-            (possible_positions[0] == RED && possible_positions[1] == BACKGROUND_COLOR) ||
-            (possible_positions[1] == RED && possible_positions[0] == BACKGROUND_COLOR)
+            (possible_positions[0] == RED && possible_positions[1] == BACKGROUND_COLOR)
+                || (possible_positions[1] == RED && possible_positions[0] == BACKGROUND_COLOR)
         );
     }
 

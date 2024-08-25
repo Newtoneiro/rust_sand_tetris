@@ -1,8 +1,10 @@
 use crate::{
     block::{Block, BlockType},
-    constants::{block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS},
-    colors::{BLUE, GREEN, RED, YELLOW}},
-    map::Map
+    constants::{
+        block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS},
+        colors::{BLUE, GREEN, RED, YELLOW},
+    },
+    map::Map,
 };
 use bounded_vec_deque::BoundedVecDeque;
 use macroquad::color::Color;
@@ -24,12 +26,10 @@ impl BlockController {
     }
 
     pub fn get_new_block(&mut self) {
-        self.block_queue.push_front(
-            BlockController::generate_random_block()
-        );
-        self.color_queue.push_front(
-            BlockController::generate_random_color()
-        );
+        self.block_queue
+            .push_front(BlockController::generate_random_block());
+        self.color_queue
+            .push_front(BlockController::generate_random_color());
         self.block_center_pos = BLOCK_STARTING_POS;
     }
 
@@ -57,48 +57,63 @@ impl BlockController {
     }
 
     pub fn move_down(&mut self, map: &Map) -> bool {
-        if map.can_move_down(&self.get_current_block().get_schema(), self.block_center_pos) {
+        if map.can_move_down(
+            &self.get_current_block().get_schema(),
+            self.block_center_pos,
+        ) {
             self.block_center_pos.1 += 1;
-            return true
+            return true;
         }
 
-        return false
+        return false;
     }
 
     pub fn move_right(&mut self, map: &Map) -> bool {
-        if map.can_move_right(&self.get_current_block().get_schema(), self.block_center_pos) {
+        if map.can_move_right(
+            &self.get_current_block().get_schema(),
+            self.block_center_pos,
+        ) {
             self.block_center_pos.0 += 1;
-            return true
+            return true;
         }
 
-        return false
+        return false;
     }
 
     pub fn move_left(&mut self, map: &Map) -> bool {
-        if map.can_move_left(&self.get_current_block().get_schema(), self.block_center_pos) {
+        if map.can_move_left(
+            &self.get_current_block().get_schema(),
+            self.block_center_pos,
+        ) {
             self.block_center_pos.0 -= 1;
-            return true
+            return true;
         }
 
-        return false
+        return false;
     }
 
     pub fn rotate_clockwise(&mut self, map: &Map) -> bool {
-        if map.can_rotate(&self.get_current_block_rotated_clockwise().get_schema(), self.block_center_pos) {
+        if map.can_rotate(
+            &self.get_current_block_rotated_clockwise().get_schema(),
+            self.block_center_pos,
+        ) {
             self.get_current_block_mut().rotate_clockwise();
-            return true
+            return true;
         }
 
-        return false
+        return false;
     }
 
     pub fn rotate_counter_clockwise(&mut self, map: &Map) -> bool {
-        if map.can_rotate(&self.get_current_block_rotated_c_clockwise().get_schema(), self.block_center_pos) {
+        if map.can_rotate(
+            &self.get_current_block_rotated_c_clockwise().get_schema(),
+            self.block_center_pos,
+        ) {
             self.get_current_block_mut().rotate_counter_clockwise();
-            return true
+            return true;
         }
 
-        return false
+        return false;
     }
 
     fn get_current_block(&self) -> &Block {
@@ -112,14 +127,14 @@ impl BlockController {
     fn get_current_block_rotated_clockwise(&self) -> Block {
         let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
         rotated_block.rotate_clockwise();
-    
+
         return rotated_block;
     }
 
     fn get_current_block_rotated_c_clockwise(&self) -> Block {
         let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
         rotated_block.rotate_counter_clockwise();
-    
+
         return rotated_block;
     }
 
@@ -140,9 +155,17 @@ impl BlockController {
         (output, color)
     }
 
-    pub fn tick(&mut self, map: &mut Map) {
-        let block_moving = self.move_down(map);
-        if !block_moving {
+    pub fn tick_and_check_game_over(&mut self, map: &mut Map) -> bool {
+        let block_moved: bool = self.move_down(map);
+        if !block_moved {
+            let game_over: bool = map.is_game_over(
+                &self.get_current_block().get_schema(),
+                self.block_center_pos,
+            );
+            if game_over {
+                return true;
+            }
+
             map.spawn_block(
                 &self.get_current_block().get_schema(),
                 self.get_current_color(),
@@ -150,6 +173,13 @@ impl BlockController {
             );
             self.get_new_block();
         }
+        false
+    }
+
+    pub fn clear(&mut self) {
+        self.block_queue.clear();
+        self.color_queue.clear();
+        self.get_new_block();
     }
 }
 

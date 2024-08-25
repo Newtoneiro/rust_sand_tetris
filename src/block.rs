@@ -31,7 +31,11 @@ impl Block {
             BlockType::IBlock => block_schemas::I_BLOCK,
             BlockType::TBlock => block_schemas::T_BLOCK,
         };
-        Block { schema: Vec::from(schema), rotation: 0, block_type }
+        Block {
+            schema: Vec::from(schema),
+            rotation: 0,
+            block_type,
+        }
     }
 
     pub fn get_schema(&self) -> Vec<(i8, i8)> {
@@ -67,7 +71,9 @@ impl Block {
     }
 
     pub fn rotate_clockwise(&mut self) {
-        if !self.can_rotate() { return () }
+        if !self.can_rotate() {
+            return ();
+        }
 
         if self.rotation == 3 {
             self.rotation = 0;
@@ -77,7 +83,9 @@ impl Block {
     }
 
     pub fn rotate_counter_clockwise(&mut self) {
-        if !self.can_rotate() { return () }
+        if !self.can_rotate() {
+            return ();
+        }
 
         if self.rotation == 0 {
             self.rotation = 3;
@@ -105,14 +113,7 @@ mod test {
         lb.rotate_clockwise();
 
         let rotated_schema = lb.get_schema();
-        let expected_rotated_schema = Vec::from(
-            [
-                (0, 0),
-                (1, 0),
-                (-1, 0),
-                (-1, 1),
-            ]
-        );
+        let expected_rotated_schema = Vec::from([(0, 0), (1, 0), (-1, 0), (-1, 1)]);
 
         for expected_square in expected_rotated_schema {
             assert!(rotated_schema.contains(&expected_square));
@@ -127,14 +128,7 @@ mod test {
         lb.rotate_clockwise();
 
         let rotated_schema = lb.get_schema();
-        let expected_rotated_schema = Vec::from(
-            [
-                (0, 1),
-                (0, 0),
-                (0, -1),
-                (-1, -1),
-            ]
-        );
+        let expected_rotated_schema = Vec::from([(0, 1), (0, 0), (0, -1), (-1, -1)]);
 
         for expected_square in expected_rotated_schema {
             assert!(rotated_schema.contains(&expected_square));
@@ -148,14 +142,7 @@ mod test {
         lb.rotate_counter_clockwise();
 
         let rotated_schema = lb.get_schema();
-        let expected_rotated_schema = Vec::from(
-            [
-                (-1, 0),
-                (0, 0),
-                (1, 0),
-                (1, -1),
-            ]
-        );
+        let expected_rotated_schema = Vec::from([(-1, 0), (0, 0), (1, 0), (1, -1)]);
 
         for expected_square in expected_rotated_schema {
             assert!(rotated_schema.contains(&expected_square));

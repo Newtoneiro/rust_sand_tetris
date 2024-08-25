@@ -28,6 +28,8 @@ pub(crate) mod colors {
     use macroquad::color::Color;
 
     pub(crate) const BACKGROUND_COLOR: Color = Color::new(0.10196, 0.0941, 0.1058, 1.0);
+    pub(crate) const FONT_COLOR: Color = Color::new(0.30196, 0.2941, 0.3058, 1.0);
+
     pub(crate) const RED: Color = Color::new(0.6392, 0.0862, 0.1294, 1.0);
     pub(crate) const BLUE: Color = Color::new(0.0039, 0.4352, 0.7254, 1.0);
     pub(crate) const GREEN: Color = Color::new(0.4980, 0.6980, 0.5215, 1.0);
@@ -40,7 +42,7 @@ pub(crate) mod block_constants {
     pub(crate) const BLOCK_CHUNK_SIDE: i32 = 10;
     pub(crate) const BLOCK_STARTING_POS: (i32, i32) = (
         MAP_WIDTH / 2 - (BLOCK_CHUNK_SIDE / 2),
-        BLOCK_CHUNK_SIDE * 4,
+        -BLOCK_CHUNK_SIDE * 2,
     );
 }
 
@@ -52,4 +54,11 @@ pub(crate) mod block_schemas {
     pub(crate) const REV_Z_BLOCK: [(i8, i8); 4] = [(0, 0), (0, 1), (1, 0), (1, -1)];
     pub(crate) const I_BLOCK: [(i8, i8); 4] = [(0, 0), (0, -1), (0, 1), (0, 2)];
     pub(crate) const T_BLOCK: [(i8, i8); 4] = [(0, 0), (-1, 0), (1, 0), (0, -1)];
+}
+
+pub(crate) mod font_constants {
+    pub(crate) const GAME_OVER_TEXT: &str = "Game Over";
+    pub(crate) const GAME_OVER_BOTTOM_TEXT: &str = "press (R) to restart...";
+    pub(crate) const GAME_OVER_FONT_SIZE: u16 = 50;
+    pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 20;
 }
