@@ -1,8 +1,14 @@
-use macroquad::prelude::*;
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
-use crate::constants::colors::BACKGROUND_COLOR;
-use crate::field::Field;
+use crate::constants::colors::{
+    BACKGROUND_COLOR, BLUE, COLOR_VAR_WEIGHTS, GREEN, RED, RED_VAR, YELLOW
+};
+use crate::constants::game_config::RANDOMIZE_BLOCK_COLOUR;
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
+use crate::field::Field;
+
+use macroquad::prelude::*;
+use ::rand::distributions::WeightedIndex;
+use ::rand::prelude::Distribution;
 
 pub struct GraphicController {}
 
@@ -32,12 +38,16 @@ impl GraphicController {
         let (block_schema, color) = block_schema_color;
         for (x, y) in block_schema {
             let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y);
+            let box_color: Color = match RANDOMIZE_BLOCK_COLOUR {
+                true => GraphicController::randomize_block_colour(color),
+                false => color,
+            };
             draw_rectangle(
                 win_x,
                 win_y,
                 (BLOCK_CHUNK_SIDE * GRAIN_SIDE_SIZE) as f32,
                 (BLOCK_CHUNK_SIDE * GRAIN_SIDE_SIZE) as f32,
-                color,
+                box_color,
             );
         }
     }
@@ -47,6 +57,22 @@ impl GraphicController {
             (x * GRAIN_SIDE_SIZE) as f32,
             (y * GRAIN_SIDE_SIZE) as f32,
         )
+    }
+
+    fn randomize_block_colour(color: Color) -> Color {
+        let colour_variations: [Color; 3] = match color {
+            RED => RED_VAR,
+            BLUE => RED_VAR,
+            GREEN => RED_VAR,
+            YELLOW => RED_VAR,
+            _ => [color.clone(), color.clone(), color.clone()],
+        };
+
+        let dist = WeightedIndex::new(&COLOR_VAR_WEIGHTS).unwrap();
+        let mut rng = ::rand::thread_rng();
+        let random_color = colour_variations[dist.sample(&mut rng)];
+
+        random_color
     }
 
     pub async fn flush() {
