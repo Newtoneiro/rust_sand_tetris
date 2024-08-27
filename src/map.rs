@@ -3,9 +3,13 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
 use std::collections::VecDeque;
+use std::u32;
 
+use crate::constants::animation_constants::FIELD_TO_DESTROY_TTL;
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
+use crate::constants::colors::BLACK;
+use crate::constants::colors::WHITE;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
 use crate::graphic_controller::GraphicController;
@@ -15,6 +19,7 @@ pub struct Map {
     height: i32,
     grid: Vec<Vec<Field>>,
     current_group_id: u32,
+    groups_to_destroy: Vec<(u8, u32)>
 }
 
 #[derive(PartialEq)]
@@ -33,6 +38,7 @@ impl Map {
             height,
             grid,
             current_group_id: 1,
+            groups_to_destroy: Vec::new(),
         }
     }
 
@@ -91,11 +97,28 @@ impl Map {
         output
     }
 
+    fn is_field_to_be_destroyed(&self, field: &Field) -> bool {
+        self.groups_to_destroy.iter().find(|(_, g_id)| *g_id == field.get_group_id()).is_some()
+    }
+
+    fn get_field_ttl(&self, field: &Field) -> u8 {
+        match self.groups_to_destroy.iter().find(|(_, g_id)| *g_id == field.get_group_id()) {
+            Some((ttl, _)) => *ttl,
+            None => u8::MAX,
+        }
+    }
+
     pub fn tick(&mut self) {
         let row_order: Vec<i32> = self.get_random_row_order();
         for y in (0..self.height).rev() {
             for x in (&row_order).into_iter() {
-                if !self.grid[y as usize][*x as usize].is_empty() {
+                let cur_field = self.get_field(*x, y).unwrap();
+                if self.is_field_to_be_destroyed(cur_field) {
+                    match self.get_field_ttl(cur_field) % 4 {
+                        0 => self.change_field(*x, y, WHITE, u32::MAX),
+                        _ => self.change_field(*x, y, BLACK, u32::MAX),
+                    }
+                } else if !cur_field.is_empty() {
                     let (new_x, new_y) = self.get_new_pos(*x, y);
                     if (new_x, new_y) != (*x, y) {
                         let old_pos_field = self.get_field(*x, y).unwrap();
@@ -112,6 +135,27 @@ impl Map {
                 }
             }
         }
+
+        self.update_fields_to_be_removed();
+    }
+
+    fn update_fields_to_be_removed(&mut self) {
+        for (ttl, _) in self.groups_to_destroy.iter_mut() {
+            *ttl -= 1;
+        }
+
+        for (ttl, g_id) in self.groups_to_destroy.clone() {
+            if ttl == 0 {
+                for y in 0..self.height {
+                    for x in 0..self.width {
+                        if self.get_field(x, y).unwrap().get_group_id() == g_id {
+                            self.change_field(x, y, BACKGROUND_COLOR, 0);
+                        }
+                    }
+                }
+            }
+        }
+        self.groups_to_destroy.retain(|group| group.0 > 0);
     }
 
     fn get_new_group(
@@ -141,12 +185,15 @@ impl Map {
     }
 
     fn demolish_groups(&mut self, group_ids: Vec<u32>) {
-        for (x, y) in self.get_fields_for_group(&group_ids) {
-            self.change_field(x, y, BACKGROUND_COLOR, 0);
+        for g_id in &group_ids {
+            self.groups_to_destroy.push((FIELD_TO_DESTROY_TTL, *g_id));
+        }
+        for (x, y) in self.get_fields_for_groups(&group_ids) {
+            self.change_field(x, y, WHITE, u32::MAX);
         }
     }
 
-    fn get_fields_for_group(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+    fn get_fields_for_groups(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
 
         for y in 0..self.height {

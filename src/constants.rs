@@ -95,5 +95,5 @@ pub(crate) mod font_constants {
 }
 
 pub(crate) mod animation_constants {
-    pub(crate) const NUMBER_OF_DEMOLISHION_SHININGS: u8 = 3;
+    pub(crate) const FIELD_TO_DESTROY_TTL: u8 = 50;
 }
