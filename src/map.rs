@@ -197,6 +197,10 @@ impl Map {
     }
 
     fn change_group_bfs(&mut self, x: i32, y: i32, new_group_id: u32) {
+        if self.get_group_size(self.get_field(x, y).unwrap().get_group_id()) > self.get_group_size(new_group_id) {
+            return ();
+        }
+
         let mut checked = Vec::new();
         let mut queue = VecDeque::from([(x, y)]);
         while queue.len() > 0 {
@@ -218,6 +222,14 @@ impl Map {
         neighbour_field.get_group_id() != 0 &&
             neighbour_field.get_group_id() != new_group_id &&
                 GraphicController::normalize_color(parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
+    }
+
+    fn get_group_size(&mut self, group_id: u32) -> usize {
+        let mut group_size: usize = 0;
+        for y in 0..self.height {
+            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
+        }
+        group_size
     }
 
     fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
