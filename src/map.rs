@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-
 use macroquad::color::Color;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -107,25 +106,12 @@ impl Map {
                         
                         self.change_field(new_x, new_y, field_color, new_group_id);
                         self.change_field(*x, y, BACKGROUND_COLOR, 0);
+
+                        self.perform_row_demolishion(new_group_id, group_id);
                     }
                 }
             }
         }
-        print!("\x1B[2J\x1B[1;1H");
-        println!("1: {}", self.get_group_size(1));
-        println!("2: {}", self.get_group_size(2));
-        println!("3: {}", self.get_group_size(3));
-        println!("4: {}", self.get_group_size(4));
-        println!("5: {}", self.get_group_size(5));
-        println!("6: {}", self.get_group_size(6));
-    }
-
-    fn get_group_size(&mut self, group_id: u32) -> usize {
-        let mut group_size: usize = 0;
-        for y in 0..self.height {
-            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
-        }
-        group_size
     }
 
     fn get_new_group(&mut self, new_pos: (i32, i32), old_pos: (i32, i32), current_group: u32) -> u32 {
@@ -134,21 +120,39 @@ impl Map {
 
         let new_group = match adjacent_groups.len() {
             1 => {
-                self.change_group_bfs(old_pos.0, old_pos.1, current_group, adjacent_groups[0]);
+                self.change_group_bfs(old_pos.0, old_pos.1, adjacent_groups[0]);
                 adjacent_groups[0]
             },
             _ => current_group,
         };
 
-        self.row_demolishion(new_group);
-
         new_group
     }
 
-    fn row_demolishion(&mut self, group_id: u32) {
+    fn perform_row_demolishion(&mut self, group_id: u32, old_group_id: u32) {
         if self.is_row_complete(group_id) {
-            println!("WIN");
+            self.demolish_groups(Vec::from([group_id, old_group_id]));
         }
+    }
+
+    fn demolish_groups(&mut self, group_ids: Vec<u32>) {
+        for (x, y) in self.get_fields_for_group(&group_ids) {
+            self.change_field(x, y, BACKGROUND_COLOR, 0);
+        }
+    }
+
+    fn get_fields_for_group(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+        let mut output = Vec::new();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if group_ids.contains(&self.get_field(x, y).unwrap().get_group_id()) {
+                    output.push((x, y));
+                }
+            }
+        }
+
+        output
     }
 
     fn is_row_complete(&self, group_id: u32) -> bool {
@@ -169,10 +173,10 @@ impl Map {
 
     fn get_adjacent_groups(&mut self, new_pos: (i32, i32), old_pos: (i32, i32)) -> Vec<u32> {
         let mut output = Vec::new();
-        for (n_x, n_y) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
-            if self.check_coords_in_bounds(new_pos.0 + n_x, new_pos.1 + n_y) {
-                if self.is_valid_neighbour(new_pos, old_pos, (new_pos.0 + n_x, new_pos.1 + n_y)) {
-                    let neighbour_group_id =  self.get_field(new_pos.0 + n_x, new_pos.1 + n_y).unwrap().get_group_id();
+        for neighbour in self.get_field_neighbours(new_pos.0, new_pos.1) {
+            if self.check_coords_in_bounds(neighbour.0, neighbour.1) {
+                if self.is_valid_neighbour(new_pos, old_pos, (neighbour.0, neighbour.1)) {
+                    let neighbour_group_id =  self.get_field(neighbour.0, neighbour.1).unwrap().get_group_id();
                     if !output.contains(&neighbour_group_id){
                         output.push(neighbour_group_id);
                     }
@@ -192,11 +196,7 @@ impl Map {
                 GraphicController::normalize_color(old_parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
-    fn change_group_bfs(&mut self, x: i32, y: i32, old_group_id: u32, new_group_id: u32) {
-        if new_group_id > old_group_id {
-            return ();
-        }
-
+    fn change_group_bfs(&mut self, x: i32, y: i32, new_group_id: u32) {
         let mut checked = Vec::new();
         let mut queue = VecDeque::from([(x, y)]);
         while queue.len() > 0 {
@@ -222,7 +222,10 @@ impl Map {
 
     fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
-        for (n_x, n_y) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+        for (n_x, n_y) in [
+                (-1, 0), (1, 0), (0, -1), (0, 1),
+                (-1, 1), (1, -1), (-1, -1), (1, 1), 
+            ] {
             if self.check_coords_in_bounds(x + n_x, y + n_y) {
                 output.push((x + n_x, y + n_y));
             }

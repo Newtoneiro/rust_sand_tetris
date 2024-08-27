@@ -49,9 +49,9 @@ impl BlockController {
 
     fn generate_random_color() -> Color {
         match rand::thread_rng().gen_range(0..=4) {
-            // 0 => RED,
-            // 1 => BLUE,
-            // 2 => GREEN,
+            0 => RED,
+            1 => BLUE,
+            2 => GREEN,
             _ => YELLOW,
         }
     }

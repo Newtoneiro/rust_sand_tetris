@@ -93,3 +93,7 @@ pub(crate) mod font_constants {
     pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 30;
     pub(crate) const GAME_OVER_OUTLINE_WIDTH: u16 = 2;
 }
+
+pub(crate) mod animation_constants {
+    pub(crate) const NUMBER_OF_DEMOLISHION_SHININGS: u8 = 3;
+}
