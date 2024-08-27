@@ -7,7 +7,6 @@ use rand::Rng;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
-use crate::constants::colors::RED_VAR;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
 use crate::graphic_controller::GraphicController;
@@ -100,22 +99,18 @@ impl Map {
                 if !self.grid[y as usize][*x as usize].is_empty() {
                     let (new_x, new_y) = self.get_new_pos(*x, y);
                     if (new_x, new_y) != (*x, y) {
-                        let field_color = self.get_field(*x, y).unwrap().get_color();
-                        let group_id = self.get_field(*x, y).unwrap().get_group_id();
+                        let old_pos_field = self.get_field(*x, y).unwrap();
+                        let field_color = old_pos_field.get_color();
+                        let group_id = old_pos_field.get_group_id();
+                        
                         let new_group_id = self.get_new_group((new_x, new_y), (*x, y), group_id);
+                        
                         self.change_field(new_x, new_y, field_color, new_group_id);
                         self.change_field(*x, y, BACKGROUND_COLOR, 0);
                     }
                 }
             }
         }
-        print!("\x1B[2J\x1B[1;1H");
-        println!("1: {}", self.get_group_size(1));
-        println!("2: {}", self.get_group_size(2));
-        println!("3: {}", self.get_group_size(3));
-        println!("4: {}", self.get_group_size(4));
-        println!("5: {}", self.get_group_size(5));
-        println!("6: {}", self.get_group_size(6));
     }
 
     fn get_new_group(&mut self, new_pos: (i32, i32), old_pos: (i32, i32), current_group: u32) -> u32 {
@@ -124,7 +119,7 @@ impl Map {
 
         let new_group = match adjacent_groups.len() {
             1 => {
-                self.change_group_bfs(old_pos.0, old_pos.1, adjacent_groups[0]);
+                self.change_group_bfs(old_pos.0, old_pos.1, current_group, adjacent_groups[0]);
                 adjacent_groups[0]
             },
             _ => current_group,
@@ -158,18 +153,22 @@ impl Map {
                 GraphicController::normalize_color(old_parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
-    fn change_group_bfs(&mut self, x: i32, y: i32, new_group: u32) {
+    fn change_group_bfs(&mut self, x: i32, y: i32, old_group_id: u32, new_group_id: u32) {
+        if new_group_id > old_group_id {
+            return ();
+        }
+
         let mut checked = Vec::new();
         let mut queue = VecDeque::from([(x, y)]);
         while queue.len() > 0 {
             let (cur_x, cur_y) = queue.pop_back().unwrap();
             for neighbour in self.get_field_neighbours(cur_x, cur_y) {
-                if !checked.contains(&neighbour) && self.grid[neighbour.1 as usize][neighbour.0 as usize].get_group_id() != 0 {
+                self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group_id);
+                checked.push((cur_x, cur_y));
+                if !checked.contains(&neighbour) && self.is_valid_neighbour((x, y), (x, y), neighbour) {
                     queue.push_back(neighbour);
                 }
             }
-            self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group);
-            checked.push((cur_x, cur_y));
         }
     }
 
@@ -424,6 +423,7 @@ impl Map {
 
     pub fn clear(&mut self) {
         self.grid = Map::create_grid(self.width, self.height);
+        self.current_group_id = 1;
     }
 }
 
