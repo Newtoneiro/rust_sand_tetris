@@ -12,7 +12,12 @@ pub struct Field {
 
 impl Field {
     pub fn new(x: i32, y: i32, color: Color, group_id: u32) -> Self {
-        Field { x, y, color, group_id }
+        Field {
+            x,
+            y,
+            color,
+            group_id,
+        }
     }
 
     pub fn do_draw(&self) -> bool {

@@ -1,8 +1,8 @@
-use std::collections::VecDeque;
 use macroquad::color::Color;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rand::Rng;
+use std::collections::VecDeque;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
@@ -101,9 +101,9 @@ impl Map {
                         let old_pos_field = self.get_field(*x, y).unwrap();
                         let field_color = old_pos_field.get_color();
                         let group_id = old_pos_field.get_group_id();
-                        
+
                         let new_group_id = self.get_new_group((new_x, new_y), (*x, y), group_id);
-                        
+
                         self.change_field(new_x, new_y, field_color, new_group_id);
                         self.change_field(*x, y, BACKGROUND_COLOR, 0);
 
@@ -114,7 +114,12 @@ impl Map {
         }
     }
 
-    fn get_new_group(&mut self, new_pos: (i32, i32), old_pos: (i32, i32), current_group: u32) -> u32 {
+    fn get_new_group(
+        &mut self,
+        new_pos: (i32, i32),
+        old_pos: (i32, i32),
+        current_group: u32,
+    ) -> u32 {
         let mut adjacent_groups = self.get_adjacent_groups(new_pos, old_pos);
         adjacent_groups.retain(|&group| group != current_group);
 
@@ -122,7 +127,7 @@ impl Map {
             1 => {
                 self.change_group_bfs(old_pos.0, old_pos.1, adjacent_groups[0]);
                 adjacent_groups[0]
-            },
+            }
             _ => current_group,
         };
 
@@ -176,8 +181,11 @@ impl Map {
         for neighbour in self.get_field_neighbours(new_pos.0, new_pos.1) {
             if self.check_coords_in_bounds(neighbour.0, neighbour.1) {
                 if self.is_valid_neighbour(new_pos, old_pos, (neighbour.0, neighbour.1)) {
-                    let neighbour_group_id =  self.get_field(neighbour.0, neighbour.1).unwrap().get_group_id();
-                    if !output.contains(&neighbour_group_id){
+                    let neighbour_group_id = self
+                        .get_field(neighbour.0, neighbour.1)
+                        .unwrap()
+                        .get_group_id();
+                    if !output.contains(&neighbour_group_id) {
                         output.push(neighbour_group_id);
                     }
                 }
@@ -186,18 +194,26 @@ impl Map {
         output
     }
 
-    fn is_valid_neighbour(&self, new_parent_pos: (i32, i32), old_parent_pos: (i32, i32), neighbour_pos: (i32, i32)) -> bool {
+    fn is_valid_neighbour(
+        &self,
+        new_parent_pos: (i32, i32),
+        old_parent_pos: (i32, i32),
+        neighbour_pos: (i32, i32),
+    ) -> bool {
         let new_parent_field = self.get_field(new_parent_pos.0, new_parent_pos.1).unwrap();
         let old_parent_field = self.get_field(old_parent_pos.0, old_parent_pos.1).unwrap();
         let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
 
-        neighbour_field.get_group_id() != 0 &&
-            new_parent_field.get_group_id() != neighbour_field.get_group_id() &&
-                GraphicController::normalize_color(old_parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
+        neighbour_field.get_group_id() != 0
+            && new_parent_field.get_group_id() != neighbour_field.get_group_id()
+            && GraphicController::normalize_color(old_parent_field.get_color())
+                == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
     fn change_group_bfs(&mut self, x: i32, y: i32, new_group_id: u32) {
-        if self.get_group_size(self.get_field(x, y).unwrap().get_group_id()) > self.get_group_size(new_group_id) {
+        if self.get_group_size(self.get_field(x, y).unwrap().get_group_id())
+            > self.get_group_size(new_group_id)
+        {
             return ();
         }
 
@@ -208,26 +224,37 @@ impl Map {
             for neighbour in self.get_field_neighbours(cur_x, cur_y) {
                 self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group_id);
                 checked.push((cur_x, cur_y));
-                if !checked.contains(&neighbour) && self.is_valid_neighbour_for_bfs((cur_x, cur_y), neighbour, new_group_id) {
+                if !checked.contains(&neighbour)
+                    && self.is_valid_neighbour_for_bfs((cur_x, cur_y), neighbour, new_group_id)
+                {
                     queue.push_back(neighbour);
                 }
             }
         }
     }
 
-    fn is_valid_neighbour_for_bfs(&self, parent_pos: (i32, i32), neighbour_pos: (i32, i32), new_group_id: u32) -> bool {
+    fn is_valid_neighbour_for_bfs(
+        &self,
+        parent_pos: (i32, i32),
+        neighbour_pos: (i32, i32),
+        new_group_id: u32,
+    ) -> bool {
         let parent_field = self.get_field(parent_pos.0, parent_pos.1).unwrap();
         let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
 
-        neighbour_field.get_group_id() != 0 &&
-            neighbour_field.get_group_id() != new_group_id &&
-                GraphicController::normalize_color(parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
+        neighbour_field.get_group_id() != 0
+            && neighbour_field.get_group_id() != new_group_id
+            && GraphicController::normalize_color(parent_field.get_color())
+                == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
     fn get_group_size(&mut self, group_id: u32) -> usize {
         let mut group_size: usize = 0;
         for y in 0..self.height {
-            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
+            group_size += Vec::from(self.grid[y as usize].clone())
+                .iter()
+                .filter(|field| field.get_group_id() == group_id)
+                .count();
         }
         group_size
     }
@@ -235,9 +262,15 @@ impl Map {
     fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
         for (n_x, n_y) in [
-                (-1, 0), (1, 0), (0, -1), (0, 1),
-                (-1, 1), (1, -1), (-1, -1), (1, 1), 
-            ] {
+            (-1, 0),
+            (1, 0),
+            (0, -1),
+            (0, 1),
+            (-1, 1),
+            (1, -1),
+            (-1, -1),
+            (1, 1),
+        ] {
             if self.check_coords_in_bounds(x + n_x, y + n_y) {
                 output.push((x + n_x, y + n_y));
             }
