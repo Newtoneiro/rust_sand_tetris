@@ -74,6 +74,20 @@ impl GraphicController {
         output
     }
 
+    pub fn normalize_color(color: Color) -> Color {
+        if RED_VAR.contains(&color) {
+            return RED;
+        } else if BLUE_VAR.contains(&color) {
+            return BLUE;
+        } else if GREEN_VAR.contains(&color) {
+            return GREEN;
+        } else if YELLOW_VAR.contains(&color) {
+            return YELLOW;
+        } else {
+            return BACKGROUND_COLOR;
+        }
+    }
+
     fn get_block_skin(x: i32, y: i32) -> usize {
         let x_normalized = x as usize % SKIN_SIDE;
         let y_normalized = y as usize % SKIN_SIDE;

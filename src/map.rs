@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use macroquad::color::Color;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -5,6 +7,7 @@ use rand::Rng;
 
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
+use crate::constants::colors::RED_VAR;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
 use crate::field::Field;
 use crate::graphic_controller::GraphicController;
@@ -13,6 +16,7 @@ pub struct Map {
     width: i32,
     height: i32,
     grid: Vec<Vec<Field>>,
+    current_group_id: u32,
 }
 
 #[derive(PartialEq)]
@@ -30,6 +34,7 @@ impl Map {
             width,
             height,
             grid,
+            current_group_id: 1,
         }
     }
 
@@ -38,15 +43,18 @@ impl Map {
         for y in 0..height {
             grid.push(Vec::new());
             for x in 0..width {
-                grid[y as usize].push(Field::new(x, y, BACKGROUND_COLOR));
+                grid[y as usize].push(Field::new(x, y, BACKGROUND_COLOR, 0));
             }
         }
         grid
     }
 
-    pub fn add_field(&mut self, x: i32, y: i32, color: Color) {
+    pub fn add_field(&mut self, x: i32, y: i32, color: Color, group_id: u32) {
         match self.get_field(x, y) {
-            Some(_) => self.grid[y as usize][x as usize].set_color(color),
+            Some(_) => {
+                self.grid[y as usize][x as usize].set_color(color);
+                self.grid[y as usize][x as usize].set_group_id(group_id);
+            }
             None => (),
         };
     }
@@ -58,11 +66,12 @@ impl Map {
         Some(&self.grid[y as usize][x as usize])
     }
 
-    pub fn change_field_color(&mut self, x: i32, y: i32, new_color: Color) {
+    pub fn change_field(&mut self, x: i32, y: i32, new_color: Color, new_group_id: u32) {
         if !self.check_coords_in_bounds(x, y) {
             return ();
         }
         self.grid[y as usize][x as usize].set_color(new_color);
+        self.grid[y as usize][x as usize].set_group_id(new_group_id);
     }
 
     fn check_coords_in_bounds(&self, x: i32, y: i32) -> bool {
@@ -92,12 +101,94 @@ impl Map {
                     let (new_x, new_y) = self.get_new_pos(*x, y);
                     if (new_x, new_y) != (*x, y) {
                         let field_color = self.get_field(*x, y).unwrap().get_color();
-                        self.change_field_color(new_x, new_y, field_color);
-                        self.change_field_color(*x, y, BACKGROUND_COLOR);
+                        let group_id = self.get_field(*x, y).unwrap().get_group_id();
+                        let new_group_id = self.get_new_group((new_x, new_y), (*x, y), group_id);
+                        self.change_field(new_x, new_y, field_color, new_group_id);
+                        self.change_field(*x, y, BACKGROUND_COLOR, 0);
                     }
                 }
             }
         }
+        print!("\x1B[2J\x1B[1;1H");
+        println!("1: {}", self.get_group_size(1));
+        println!("2: {}", self.get_group_size(2));
+        println!("3: {}", self.get_group_size(3));
+        println!("4: {}", self.get_group_size(4));
+        println!("5: {}", self.get_group_size(5));
+        println!("6: {}", self.get_group_size(6));
+    }
+
+    fn get_new_group(&mut self, new_pos: (i32, i32), old_pos: (i32, i32), current_group: u32) -> u32 {
+        let mut adjacent_groups = self.get_adjacent_groups(new_pos, old_pos);
+        adjacent_groups.retain(|&group| group != current_group);
+
+        let new_group = match adjacent_groups.len() {
+            1 => {
+                self.change_group_bfs(old_pos.0, old_pos.1, adjacent_groups[0]);
+                adjacent_groups[0]
+            },
+            _ => current_group,
+        };
+
+        new_group
+    }
+
+    fn get_adjacent_groups(&mut self, new_pos: (i32, i32), old_pos: (i32, i32)) -> Vec<u32> {
+        let mut output = Vec::new();
+        for (n_x, n_y) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+            if self.check_coords_in_bounds(new_pos.0 + n_x, new_pos.1 + n_y) {
+                if self.is_valid_neighbour(new_pos, old_pos, (new_pos.0 + n_x, new_pos.1 + n_y)) {
+                    let neighbour_group_id =  self.get_field(new_pos.0 + n_x, new_pos.1 + n_y).unwrap().get_group_id();
+                    if !output.contains(&neighbour_group_id){
+                        output.push(neighbour_group_id);
+                    }
+                }
+            }
+        }
+        output
+    }
+
+    fn is_valid_neighbour(&self, new_parent_pos: (i32, i32), old_parent_pos: (i32, i32), neighbour_pos: (i32, i32)) -> bool {
+        let new_parent_field = self.get_field(new_parent_pos.0, new_parent_pos.1).unwrap();
+        let old_parent_field = self.get_field(old_parent_pos.0, old_parent_pos.1).unwrap();
+        let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
+
+        neighbour_field.get_group_id() != 0 &&
+            new_parent_field.get_group_id() != neighbour_field.get_group_id() &&
+                GraphicController::normalize_color(old_parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
+    }
+
+    fn change_group_bfs(&mut self, x: i32, y: i32, new_group: u32) {
+        let mut checked = Vec::new();
+        let mut queue = VecDeque::from([(x, y)]);
+        while queue.len() > 0 {
+            let (cur_x, cur_y) = queue.pop_back().unwrap();
+            for neighbour in self.get_field_neighbours(cur_x, cur_y) {
+                if !checked.contains(&neighbour) && self.grid[neighbour.1 as usize][neighbour.0 as usize].get_group_id() != 0 {
+                    queue.push_back(neighbour);
+                }
+            }
+            self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group);
+            checked.push((cur_x, cur_y));
+        }
+    }
+
+    fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
+        let mut output = Vec::new();
+        for (n_x, n_y) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+            if self.check_coords_in_bounds(x + n_x, y + n_y) {
+                output.push((x + n_x, y + n_y));
+            }
+        }
+        output
+    }
+
+    fn get_group_size(&mut self, group_id: u32) -> usize {
+        let mut group_size: usize = 0;
+        for y in 0..self.height {
+            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
+        }
+        group_size
     }
 
     fn get_random_row_order(&self) -> Vec<i32> {
@@ -302,8 +393,9 @@ impl Map {
 
     pub fn spawn_block(&mut self, schema: Vec<(i32, i32)>, color: Color) {
         for (x, y, color) in GraphicController::get_skin_for_schema(schema, color) {
-            self.add_field(x, y, color);
+            self.add_field(x, y, color, self.current_group_id);
         }
+        self.current_group_id += 1;
     }
 
     fn get_fields_from_schema(
@@ -381,22 +473,22 @@ mod test {
     #[test]
     fn get_fields_to_draw() {
         let mut map: Map = Map::new(200, 400);
-        map.change_field_color(40, 20, RED);
-        map.change_field_color(30, 15, RED);
-        map.change_field_color(100, 0, RED);
+        map.change_field(40, 20, RED, 0);
+        map.change_field(30, 15, RED, 0);
+        map.change_field(100, 0, RED, 0);
 
         let fields_to_draw: Vec<Field> = map.get_fields_to_draw();
 
         assert_eq!(fields_to_draw.len(), 3);
-        assert!(fields_to_draw.contains(&Field::new(40, 20, RED)));
-        assert!(fields_to_draw.contains(&Field::new(30, 15, RED)));
-        assert!(fields_to_draw.contains(&Field::new(100, 0, RED)));
+        assert!(fields_to_draw.contains(&Field::new(40, 20, RED, 0)));
+        assert!(fields_to_draw.contains(&Field::new(30, 15, RED, 0)));
+        assert!(fields_to_draw.contains(&Field::new(100, 0, RED, 0)));
     }
 
     #[test]
     fn grains_move_down() {
         let mut map: Map = Map::new(200, 400);
-        map.change_field_color(40, 20, RED);
+        map.change_field(40, 20, RED, 0);
 
         map.tick();
 
@@ -411,8 +503,8 @@ mod test {
         //    #      ->     ##
 
         let mut map: Map = Map::new(10, 10);
-        map.change_field_color(5, 9, RED); // Grain under
-        map.change_field_color(5, 8, RED); // Grain above
+        map.change_field(5, 9, RED, 0); // Grain under
+        map.change_field(5, 8, RED, 0); // Grain above
 
         map.tick();
 
@@ -433,8 +525,8 @@ mod test {
     #[test]
     fn grains_move_down_to_side_left_wall() {
         let mut map: Map = Map::new(10, 10);
-        map.change_field_color(0, 9, RED); // Grain under
-        map.change_field_color(0, 8, RED); // Grain above
+        map.change_field(0, 9, RED, 0); // Grain under
+        map.change_field(0, 8, RED, 0); // Grain above
 
         map.tick();
 
@@ -447,10 +539,10 @@ mod test {
     #[test]
     fn grains_move_down_to_side_left_blocked() {
         let mut map: Map = Map::new(10, 10);
-        map.change_field_color(1, 9, RED); // Grain under
-        map.change_field_color(1, 8, RED); // Grain above
-        map.change_field_color(0, 9, RED); // left Grain above
-        map.change_field_color(0, 8, RED); // left Grain above
+        map.change_field(1, 9, RED, 0); // Grain under
+        map.change_field(1, 8, RED, 0); // Grain above
+        map.change_field(0, 9, RED, 0); // left Grain above
+        map.change_field(0, 8, RED, 0); // left Grain above
 
         map.tick();
 
@@ -465,8 +557,8 @@ mod test {
     #[test]
     fn grains_move_down_to_side_right_wall() {
         let mut map: Map = Map::new(10, 10);
-        map.change_field_color(9, 9, RED); // Grain under
-        map.change_field_color(9, 8, RED); // Grain above
+        map.change_field(9, 9, RED, 0); // Grain under
+        map.change_field(9, 8, RED, 0); // Grain above
 
         map.tick();
 
@@ -479,10 +571,10 @@ mod test {
     #[test]
     fn grains_move_down_to_side_right_blocked() {
         let mut map: Map = Map::new(10, 10);
-        map.change_field_color(8, 9, RED); // Grain under
-        map.change_field_color(8, 8, RED); // Grain above
-        map.change_field_color(9, 9, RED); // right Grain above
-        map.change_field_color(9, 8, RED); // right Grain above
+        map.change_field(8, 9, RED, 0); // Grain under
+        map.change_field(8, 8, RED, 0); // Grain above
+        map.change_field(9, 9, RED, 0); // right Grain above
+        map.change_field(9, 8, RED, 0); // right Grain above
 
         map.tick();
 
