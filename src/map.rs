@@ -92,10 +92,9 @@ impl Map {
     }
 
     pub fn tick(&mut self) {
-        let row_order: Vec<i32> = self.get_random_row_order();
         for y in (0..self.height).rev() {
-            for x in (&row_order).into_iter() {
-                if !self.grid[y as usize][*x as usize].is_empty() {
+            for x in (&self.get_random_row_order()).into_iter() {
+                if !self.get_field(*x, y).unwrap().is_empty() {
                     let (new_x, new_y) = self.get_new_pos(*x, y);
                     if (new_x, new_y) != (*x, y) {
                         let old_pos_field = self.get_field(*x, y).unwrap();
@@ -132,48 +131,6 @@ impl Map {
         };
 
         new_group
-    }
-
-    fn perform_row_demolishion(&mut self, group_id: u32, old_group_id: u32) {
-        if self.is_row_complete(group_id) {
-            self.demolish_groups(Vec::from([group_id, old_group_id]));
-        }
-    }
-
-    fn demolish_groups(&mut self, group_ids: Vec<u32>) {
-        for (x, y) in self.get_fields_for_group(&group_ids) {
-            self.change_field(x, y, BACKGROUND_COLOR, 0);
-        }
-    }
-
-    fn get_fields_for_group(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
-        let mut output = Vec::new();
-
-        for y in 0..self.height {
-            for x in 0..self.width {
-                if group_ids.contains(&self.get_field(x, y).unwrap().get_group_id()) {
-                    output.push((x, y));
-                }
-            }
-        }
-
-        output
-    }
-
-    fn is_row_complete(&self, group_id: u32) -> bool {
-        let mut touches_left_wall = false;
-        let mut touches_right_wall = false;
-
-        for y in 0..self.height {
-            if self.get_field(0, y).unwrap().get_group_id() == group_id {
-                touches_left_wall = true;
-            }
-            if self.get_field(self.width - 1, y).unwrap().get_group_id() == group_id {
-                touches_right_wall = true;
-            }
-        }
-
-        touches_left_wall && touches_right_wall
     }
 
     fn get_adjacent_groups(&mut self, new_pos: (i32, i32), old_pos: (i32, i32)) -> Vec<u32> {
@@ -246,6 +203,48 @@ impl Map {
             && neighbour_field.get_group_id() != new_group_id
             && GraphicController::normalize_color(parent_field.get_color())
                 == GraphicController::normalize_color(neighbour_field.get_color())
+    }
+
+    fn perform_row_demolishion(&mut self, group_id: u32, old_group_id: u32) {
+        if self.is_row_complete(group_id) {
+            self.demolish_groups(Vec::from([group_id, old_group_id]));
+        }
+    }
+
+    fn is_row_complete(&self, group_id: u32) -> bool {
+        let mut touches_left_wall = false;
+        let mut touches_right_wall = false;
+
+        for y in 0..self.height {
+            if self.get_field(0, y).unwrap().get_group_id() == group_id {
+                touches_left_wall = true;
+            }
+            if self.get_field(self.width - 1, y).unwrap().get_group_id() == group_id {
+                touches_right_wall = true;
+            }
+        }
+
+        touches_left_wall && touches_right_wall
+    }
+
+    fn demolish_groups(&mut self, group_ids: Vec<u32>) {
+        for (x, y) in self.get_fields_for_group(&group_ids) {
+            self.change_field(x, y, BACKGROUND_COLOR, 0);
+        }
+    }
+
+    fn get_fields_for_group(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+        let mut output = Vec::new();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if group_ids.contains(&self.get_field(x, y).unwrap().get_group_id()) {
+                    output.push((x, y));
+                }
+            }
+        }
+
+        output
     }
 
     fn get_group_size(&mut self, group_id: u32) -> usize {

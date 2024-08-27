@@ -1,7 +1,3 @@
-use std::thread;
-use std::time::Duration;
-
-use crate::constants::animation_constants::NUMBER_OF_DEMOLISHION_SHININGS;
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
 use crate::constants::colors::{
@@ -47,35 +43,6 @@ impl GraphicController {
                 GRAIN_SIDE_SIZE as f32,
                 color,
             );
-        }
-    }
-
-    pub async fn indicate_demolishion(fields: Vec<(i32, i32)>) {
-        for _ in 0..NUMBER_OF_DEMOLISHION_SHININGS {
-            for (x, y) in &fields {
-                let (win_x, win_y) = GraphicController::map_to_window_dimensions(*x, *y);
-                draw_rectangle(
-                    win_x,
-                    win_y,
-                    GRAIN_SIDE_SIZE as f32,
-                    GRAIN_SIDE_SIZE as f32,
-                    BLUE,
-                );
-            }
-            GraphicController::flush().await;
-            thread::sleep(Duration::from_millis(100));
-            for (x, y) in &fields {
-                let (win_x, win_y) = GraphicController::map_to_window_dimensions(*x, *y);
-                draw_rectangle(
-                    win_x,
-                    win_y,
-                    GRAIN_SIDE_SIZE as f32,
-                    GRAIN_SIDE_SIZE as f32,
-                    BACKGROUND_COLOR,
-                );
-            }
-            GraphicController::flush().await;
-            thread::sleep(Duration::from_millis(100));
         }
     }
 
