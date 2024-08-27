@@ -111,6 +111,21 @@ impl Map {
                 }
             }
         }
+        print!("\x1B[2J\x1B[1;1H");
+        println!("1: {}", self.get_group_size(1));
+        println!("2: {}", self.get_group_size(2));
+        println!("3: {}", self.get_group_size(3));
+        println!("4: {}", self.get_group_size(4));
+        println!("5: {}", self.get_group_size(5));
+        println!("6: {}", self.get_group_size(6));
+    }
+
+    fn get_group_size(&mut self, group_id: u32) -> usize {
+        let mut group_size: usize = 0;
+        for y in 0..self.height {
+            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
+        }
+        group_size
     }
 
     fn get_new_group(&mut self, new_pos: (i32, i32), old_pos: (i32, i32), current_group: u32) -> u32 {
@@ -125,7 +140,31 @@ impl Map {
             _ => current_group,
         };
 
+        self.row_demolishion(new_group);
+
         new_group
+    }
+
+    fn row_demolishion(&mut self, group_id: u32) {
+        if self.is_row_complete(group_id) {
+            println!("WIN");
+        }
+    }
+
+    fn is_row_complete(&self, group_id: u32) -> bool {
+        let mut touches_left_wall = false;
+        let mut touches_right_wall = false;
+
+        for y in 0..self.height {
+            if self.get_field(0, y).unwrap().get_group_id() == group_id {
+                touches_left_wall = true;
+            }
+            if self.get_field(self.width - 1, y).unwrap().get_group_id() == group_id {
+                touches_right_wall = true;
+            }
+        }
+
+        touches_left_wall && touches_right_wall
     }
 
     fn get_adjacent_groups(&mut self, new_pos: (i32, i32), old_pos: (i32, i32)) -> Vec<u32> {
@@ -165,11 +204,20 @@ impl Map {
             for neighbour in self.get_field_neighbours(cur_x, cur_y) {
                 self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group_id);
                 checked.push((cur_x, cur_y));
-                if !checked.contains(&neighbour) && self.is_valid_neighbour((x, y), (x, y), neighbour) {
+                if !checked.contains(&neighbour) && self.is_valid_neighbour_for_bfs((cur_x, cur_y), neighbour, new_group_id) {
                     queue.push_back(neighbour);
                 }
             }
         }
+    }
+
+    fn is_valid_neighbour_for_bfs(&self, parent_pos: (i32, i32), neighbour_pos: (i32, i32), new_group_id: u32) -> bool {
+        let parent_field = self.get_field(parent_pos.0, parent_pos.1).unwrap();
+        let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
+
+        neighbour_field.get_group_id() != 0 &&
+            neighbour_field.get_group_id() != new_group_id &&
+                GraphicController::normalize_color(parent_field.get_color()) == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
     fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
@@ -180,14 +228,6 @@ impl Map {
             }
         }
         output
-    }
-
-    fn get_group_size(&mut self, group_id: u32) -> usize {
-        let mut group_size: usize = 0;
-        for y in 0..self.height {
-            group_size += Vec::from(self.grid[y as usize].clone()).iter().filter(|field| field.get_group_id() == group_id).count();
-        }
-        group_size
     }
 
     fn get_random_row_order(&self) -> Vec<i32> {
