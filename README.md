@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/6496ba22-04fb-406c-a18d-4eb10af0ff33
+
 # Rust Sand Tetris
 
 This is a simple implementation of the classic game Tetris using the Rust programming language with a twist. I am aware that similar variant of this game already exists, I took huge inspiration from that.
