@@ -5,14 +5,13 @@ use ::rand::thread_rng;
 use crate::{
     block_controller::BlockController, constants::{
         animation_constants::DEMOLISHION_CHUNK_SIZE, colors::{BLACK, WHITE}, font_constants::{
-            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
-            GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT,
+            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE, GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT, H_TEXT_BORDER_OFFSET, SCORE_FONT_SIZE, SCORE_OUTLINE_WIDTH, SCORE_TEXT, V_TEXT_BORDER_OFFSET
         }, map_constants::{MAP_HEIGHT, MAP_WIDTH}
     }, field::Field, graphic_controller::GraphicController, map::Map
 };
 
 pub struct GameController {
-    score: i32,
+    score: u32,
     is_game_over: bool,
     block_controller: BlockController,
     map: Map,
@@ -45,12 +44,30 @@ impl GameController {
             return ();
         }
 
+        self.tick_map_and_update_score().await;
+        self.tick_block_and_check_game_over().await;
+    }
+
+    async fn draw_game(&mut self) {
+        self.draw_gamefield();
+
+        if self.is_game_over {
+            self.display_game_over();
+        }
+
+        GraphicController::flush().await;
+    }
+
+    async fn tick_map_and_update_score(&mut self) {
         let score_fields: Vec<(i32, i32)> = self.map.tick_and_get_score_fields();
         if score_fields.len() > 0 {
             self.draw_row_demolishion(&score_fields).await;
             self.map.demolish_fields(&score_fields);
+            self.score += score_fields.len() as u32;
         }
+    }
 
+    async fn tick_block_and_check_game_over(&mut self) {
         let is_game_over = self
             .block_controller
             .tick_and_check_game_over(&mut self.map);
@@ -61,6 +78,29 @@ impl GameController {
 
     fn handle_game_over(&mut self) {
         self.is_game_over = true;
+    }
+
+    fn draw_gamefield(&self) {
+        GraphicController::draw_background();
+        GraphicController::draw_block(self.block_controller.get_block_to_draw());
+        GraphicController::draw_fields(&self.map.get_fields_to_draw());
+        self.draw_interface();
+    }
+
+    fn draw_interface(&self) {
+        let score_text = format!("{}:{}", SCORE_TEXT, self.score);
+        let text_center = GraphicController::get_text_center(&score_text, SCORE_FONT_SIZE);
+        let score_position = GraphicController::map_to_window_dimensions(MAP_WIDTH, 0);
+
+        GraphicController::draw_text_with_outline(
+            &score_text,
+            score_position.0 - 2.0 * text_center.0 - H_TEXT_BORDER_OFFSET,
+            score_position.1 + 2.0 * text_center.1 + V_TEXT_BORDER_OFFSET,
+            SCORE_FONT_SIZE,
+            BLACK,
+            WHITE,
+            SCORE_OUTLINE_WIDTH,
+        );
     }
 
     fn display_game_over(&self) {
@@ -87,22 +127,6 @@ impl GameController {
             WHITE,
             GAME_OVER_OUTLINE_WIDTH,
         );
-    }
-
-    async fn draw_game(&mut self) {
-        self.draw_gamefield();
-
-        if self.is_game_over {
-            self.display_game_over();
-        }
-
-        GraphicController::flush().await;
-    }
-
-    fn draw_gamefield(&self) {
-        GraphicController::draw_background();
-        GraphicController::draw_block(self.block_controller.get_block_to_draw());
-        GraphicController::draw_fields(&self.map.get_fields_to_draw());
     }
 
     async fn draw_row_demolishion(&self, fields_coords: &Vec<(i32, i32)>) {
