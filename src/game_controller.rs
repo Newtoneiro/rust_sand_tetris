@@ -1,17 +1,14 @@
 use macroquad::input::KeyCode;
+use ::rand::seq::SliceRandom;
+use ::rand::thread_rng;
 
 use crate::{
-    block_controller::BlockController,
-    constants::{
-        colors::{BLACK, WHITE},
-        font_constants::{
+    block_controller::BlockController, constants::{
+        animation_constants::DEMOLISHION_CHUNK_SIZE, colors::{BLACK, WHITE}, font_constants::{
             GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
             GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT,
-        },
-        map_constants::{MAP_HEIGHT, MAP_WIDTH},
-    },
-    graphic_controller::GraphicController,
-    map::Map,
+        }, map_constants::{MAP_HEIGHT, MAP_WIDTH}
+    }, field::Field, graphic_controller::GraphicController, map::Map
 };
 
 pub struct GameController {
@@ -93,9 +90,7 @@ impl GameController {
     }
 
     async fn draw_game(&mut self) {
-        GraphicController::draw_background();
-        GraphicController::draw_block(self.block_controller.get_block_to_draw());
-        GraphicController::draw_fields(&self.map.get_fields_to_draw());
+        self.draw_gamefield();
 
         if self.is_game_over {
             self.display_game_over();
@@ -104,13 +99,33 @@ impl GameController {
         GraphicController::flush().await;
     }
 
-    async fn draw_row_demolishion(&self, fields: &Vec<(i32, i32)>) {
+    fn draw_gamefield(&self) {
+        GraphicController::draw_background();
+        GraphicController::draw_block(self.block_controller.get_block_to_draw());
+        GraphicController::draw_fields(&self.map.get_fields_to_draw());
+    }
+
+    async fn draw_row_demolishion(&self, fields_coords: &Vec<(i32, i32)>) {
+        let fields_to_demolish = self.get_shuffled_fields(fields_coords);
+        let mut demolishion_stash = Vec::new();
+
+        for fields in fields_to_demolish.chunks(DEMOLISHION_CHUNK_SIZE) {
+            demolishion_stash.extend(fields);
+            
+            self.draw_gamefield();
+            GraphicController::draw_fields_vanish(&demolishion_stash);
+
+            GraphicController::flush().await;
+        }
+    }
+
+    fn get_shuffled_fields(&self, fields_coords: &Vec<(i32, i32)>) -> Vec<&Field> {
         let mut fields_to_demolish = Vec::new();
-        for (x, y) in fields {
+        for (x, y) in fields_coords {
             fields_to_demolish.push(self.map.get_field(*x, *y).unwrap());
         }
-
-        GraphicController::animate_fields_demolishion(&fields_to_demolish);
+        fields_to_demolish.shuffle(&mut thread_rng());
+        fields_to_demolish
     }
 
     pub fn do_move(&mut self, key: KeyCode) {

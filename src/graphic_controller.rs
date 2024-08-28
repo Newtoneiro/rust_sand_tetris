@@ -1,3 +1,5 @@
+use macroquad::prelude::*;
+
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
 use crate::constants::colors::{
@@ -5,19 +7,18 @@ use crate::constants::colors::{
 };
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
 use crate::field::Field;
-use macroquad::prelude::*;
 
 pub struct GraphicController {}
 
 impl GraphicController {
+    pub fn draw_background() {
+        clear_background(BACKGROUND_COLOR);
+    }
+
     pub fn draw_fields(fields: &Vec<&Field>) {
         for field in fields {
             GraphicController::draw_field(field);
         }
-    }
-
-    pub fn draw_background() {
-        clear_background(BACKGROUND_COLOR);
     }
 
     pub fn draw_field(field: &Field) {
@@ -85,8 +86,22 @@ impl GraphicController {
         );
     }
 
-    pub fn animate_fields_demolishion(fields: &Vec<&Field>) {
-        GraphicController::draw_fields(fields);
+    pub fn draw_fields_vanish(fields: &Vec<&Field>) {
+        for field in fields {
+            GraphicController::draw_field_vanish(field);
+        }
+    }
+
+    fn draw_field_vanish(field: &Field) {
+        let (win_x, win_y) =
+            GraphicController::map_to_window_dimensions(field.get_x(), field.get_y());
+        draw_rectangle(
+            win_x,
+            win_y,
+            GRAIN_SIDE_SIZE as f32,
+            GRAIN_SIDE_SIZE as f32,
+            BACKGROUND_COLOR,
+        );
     }
 
     pub fn get_skin_for_schema(
