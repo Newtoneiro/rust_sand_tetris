@@ -1,7 +1,7 @@
 use crate::{
     block::{Block, BlockType},
     constants::{
-        block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS},
+        block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS, PREVIEW_BLOCK_CHUNK_SIDE},
         colors::{BLUE, GREEN, RED, YELLOW},
     },
     map::{ColisionType, Map},
@@ -20,8 +20,8 @@ impl BlockController {
     pub fn new() -> BlockController {
         BlockController {
             block_center_pos: BLOCK_STARTING_POS,
-            block_queue: BoundedVecDeque::new(3),
-            color_queue: BoundedVecDeque::new(3),
+            block_queue: BoundedVecDeque::new(2),
+            color_queue: BoundedVecDeque::new(2),
         }
     }
 
@@ -171,26 +171,34 @@ impl BlockController {
     }
 
     fn get_current_block(&self) -> &Block {
-        self.block_queue.get(0).unwrap()
+        self.block_queue.get(1).unwrap()
     }
 
     fn get_current_color(&self) -> &Color {
+        self.color_queue.get(1).unwrap()
+    }
+
+    fn get_next_block(&self) -> &Block {
+        self.block_queue.get(0).unwrap()
+    }
+
+    fn get_next_color(&self) -> &Color {
         self.color_queue.get(0).unwrap()
     }
 
     fn get_current_block_mut(&mut self) -> &mut Block {
-        self.block_queue.get_mut(0).unwrap()
+        self.block_queue.get_mut(1).unwrap()
     }
 
     fn get_current_block_rotated_clockwise(&self) -> Block {
-        let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
+        let mut rotated_block = (*self.block_queue.get(1).unwrap()).clone();
         rotated_block.rotate_clockwise();
 
         return rotated_block;
     }
 
     fn get_current_block_rotated_c_clockwise(&self) -> Block {
-        let mut rotated_block = (*self.block_queue.get(0).unwrap()).clone();
+        let mut rotated_block = (*self.block_queue.get(1).unwrap()).clone();
         rotated_block.rotate_counter_clockwise();
 
         return rotated_block;
@@ -209,6 +217,19 @@ impl BlockController {
         (output, color)
     }
 
+    pub fn get_next_block_miniature(&self) -> (Vec<(i32, i32)>, Color) {
+        let mut output: Vec<(i32, i32)> = Vec::new();
+        let color: Color = self.get_next_color().clone();
+
+        for block_box in self.get_next_block().get_schema() {
+            output.push((
+                block_box.0 as i32 * PREVIEW_BLOCK_CHUNK_SIDE,
+                block_box.1 as i32 * PREVIEW_BLOCK_CHUNK_SIDE,
+            ))
+        }
+        (output, color)
+    }
+
     pub fn tick_and_check_game_over(&mut self, map: &mut Map) -> bool {
         self.handle_move_down(map)
     }
@@ -222,7 +243,8 @@ impl BlockController {
     pub fn clear(&mut self) {
         self.block_queue.clear();
         self.color_queue.clear();
-        self.get_new_block();
+        self.get_new_block(); // Current
+        self.get_new_block(); // Next
     }
 }
 

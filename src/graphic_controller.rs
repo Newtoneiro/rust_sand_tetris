@@ -1,10 +1,11 @@
 use macroquad::prelude::*;
 
-use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
+use crate::constants::block_constants::{BLOCK_CHUNK_SIDE, PREVIEW_BLOCK_CHUNK_SIDE};
 use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
 use crate::constants::colors::{
     BACKGROUND_COLOR, BLUE, BLUE_VAR, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR,
 };
+use crate::constants::interface_constants::{H_BORDER_OFFSET, V_BORDER_OFFSET};
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
 use crate::field::Field;
 
@@ -42,6 +43,23 @@ impl GraphicController {
                 win_y,
                 GRAIN_SIDE_SIZE as f32,
                 GRAIN_SIDE_SIZE as f32,
+                color,
+            );
+        }
+    }
+
+    pub fn draw_block_miniature(
+        block_schema_color: (Vec<(i32, i32)>, Color),
+        origin_point: (f32, f32),
+    ) {
+        let (block_schema, color) = block_schema_color;
+        for (x, y) in block_schema {
+            let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y);
+            draw_rectangle(
+                win_x + origin_point.0,
+                win_y + origin_point.1,
+                PREVIEW_BLOCK_CHUNK_SIDE as f32 * GRAIN_SIDE_SIZE as f32,
+                PREVIEW_BLOCK_CHUNK_SIDE as f32 * GRAIN_SIDE_SIZE as f32,
                 color,
             );
         }

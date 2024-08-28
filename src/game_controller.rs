@@ -1,13 +1,22 @@
-use macroquad::input::KeyCode;
 use ::rand::seq::SliceRandom;
 use ::rand::thread_rng;
+use macroquad::{color::Color, input::KeyCode};
 
 use crate::{
-    block_controller::BlockController, constants::{
-        animation_constants::DEMOLISHION_CHUNK_SIZE, colors::{BLACK, WHITE}, font_constants::{
-            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE, GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT, H_TEXT_BORDER_OFFSET, SCORE_FONT_SIZE, SCORE_OUTLINE_WIDTH, SCORE_TEXT, V_TEXT_BORDER_OFFSET
-        }, map_constants::{MAP_HEIGHT, MAP_WIDTH}
-    }, field::Field, graphic_controller::GraphicController, map::Map
+    block_controller::BlockController,
+    constants::{
+        animation_constants::DEMOLISHION_CHUNK_SIZE,
+        colors::{BLACK, WHITE},
+        interface_constants::{
+            GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
+            GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT, H_BORDER_OFFSET, SCORE_FONT_SIZE,
+            SCORE_OUTLINE_WIDTH, SCORE_TEXT, V_BORDER_OFFSET,
+        },
+        map_constants::{MAP_HEIGHT, MAP_WIDTH},
+    },
+    field::Field,
+    graphic_controller::GraphicController,
+    map::Map,
 };
 
 pub struct GameController {
@@ -88,19 +97,43 @@ impl GameController {
     }
 
     fn draw_interface(&self) {
+        self.draw_score();
+        self.draw_next_block();
+    }
+
+    fn draw_score(&self) {
         let score_text = format!("{}:{}", SCORE_TEXT, self.score);
         let text_center = GraphicController::get_text_center(&score_text, SCORE_FONT_SIZE);
         let score_position = GraphicController::map_to_window_dimensions(MAP_WIDTH, 0);
 
         GraphicController::draw_text_with_outline(
             &score_text,
-            score_position.0 - 2.0 * text_center.0 - H_TEXT_BORDER_OFFSET,
-            score_position.1 + 2.0 * text_center.1 + V_TEXT_BORDER_OFFSET,
+            score_position.0 - 2.0 * text_center.0 - H_BORDER_OFFSET,
+            score_position.1 + 2.0 * text_center.1 + V_BORDER_OFFSET,
             SCORE_FONT_SIZE,
             BLACK,
             WHITE,
             SCORE_OUTLINE_WIDTH,
         );
+    }
+
+    fn draw_next_block(&self) {
+        let next_block = self.get_next_block_miniature();
+
+        GraphicController::draw_block_miniature(next_block, (H_BORDER_OFFSET, V_BORDER_OFFSET));
+    }
+
+    fn get_next_block_miniature(&self) -> (Vec<(i32, i32)>, Color) {
+        let mut next_block = self.block_controller.get_next_block_miniature();
+        let x_normalize = next_block.0.iter().min_by_key(|block| block.0).unwrap().0;
+        let y_normalize = next_block.0.iter().min_by_key(|block| block.1).unwrap().1;
+
+        for unnormalized_block in next_block.0.iter_mut() {
+            unnormalized_block.0 += x_normalize.abs();
+            unnormalized_block.1 += y_normalize.abs();
+        }
+
+        next_block
     }
 
     fn display_game_over(&self) {
@@ -135,7 +168,7 @@ impl GameController {
 
         for fields in fields_to_demolish.chunks(DEMOLISHION_CHUNK_SIZE) {
             demolishion_stash.extend(fields);
-            
+
             self.draw_gamefield();
             GraphicController::draw_fields_vanish(&demolishion_stash);
 

@@ -57,6 +57,7 @@ pub(crate) mod block_constants {
     use super::map_constants::MAP_WIDTH;
 
     pub(crate) const BLOCK_CHUNK_SIDE: i32 = MAP_WIDTH / 12;
+    pub(crate) const PREVIEW_BLOCK_CHUNK_SIDE: i32 = 3;
     pub(crate) const BLOCK_STARTING_POS: (i32, i32) = (
         MAP_WIDTH / 2 - (BLOCK_CHUNK_SIDE / 2),
         -BLOCK_CHUNK_SIDE * 2,
@@ -86,19 +87,19 @@ pub(crate) mod block_skins {
     ];
 }
 
-pub(crate) mod font_constants {
+pub(crate) mod interface_constants {
     pub(crate) const GAME_OVER_TEXT: &str = "Game Over";
-    pub(crate) const GAME_OVER_FONT_SIZE: u16 = 50;
+    pub(crate) const GAME_OVER_FONT_SIZE: u16 = 60;
     pub(crate) const GAME_OVER_BOTTOM_TEXT: &str = "press (R) to restart...";
-    pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 30;
-    pub(crate) const GAME_OVER_OUTLINE_WIDTH: u16 = 2;
+    pub(crate) const GAME_OVER_BOTTOM_FONT_SIZE: u16 = 40;
+    pub(crate) const GAME_OVER_OUTLINE_WIDTH: u16 = 3;
 
     pub(crate) const SCORE_TEXT: &str = "Score";
     pub(crate) const SCORE_FONT_SIZE: u16 = 45;
     pub(crate) const SCORE_OUTLINE_WIDTH: u16 = 3;
 
-    pub(crate) const H_TEXT_BORDER_OFFSET: f32 = 20.0;
-    pub(crate) const V_TEXT_BORDER_OFFSET: f32 = 20.0;
+    pub(crate) const H_BORDER_OFFSET: f32 = 20.0;
+    pub(crate) const V_BORDER_OFFSET: f32 = 20.0;
 }
 
 pub(crate) mod animation_constants {
