@@ -10,9 +10,9 @@ use macroquad::prelude::*;
 pub struct GraphicController {}
 
 impl GraphicController {
-    pub fn draw_fields(fields: Vec<Field>) {
+    pub fn draw_fields(fields: &Vec<&Field>) {
         for field in fields {
-            GraphicController::draw_field(&field);
+            GraphicController::draw_field(field);
         }
     }
 
@@ -20,7 +20,7 @@ impl GraphicController {
         clear_background(BACKGROUND_COLOR);
     }
 
-    fn draw_field(field: &Field) {
+    pub fn draw_field(field: &Field) {
         let (win_x, win_y) =
             GraphicController::map_to_window_dimensions(field.get_x(), field.get_y());
         draw_rectangle(
@@ -44,6 +44,49 @@ impl GraphicController {
                 color,
             );
         }
+    }
+
+    pub fn draw_text_with_outline(
+        text: &str,
+        x: f32,
+        y: f32,
+        font_size: u16,
+        inner_color: Color,
+        outer_color: Color,
+        border_width: u16,
+    ) {
+        GraphicController::draw_text(
+            text,
+            x - border_width as f32 / 2.0,
+            y - border_width as f32 / 2.0,
+            font_size,
+            outer_color,
+        );
+        GraphicController::draw_text(
+            text,
+            x + border_width as f32 / 2.0,
+            y + border_width as f32 / 2.0,
+            font_size,
+            outer_color,
+        );
+        GraphicController::draw_text(text, x, y, font_size, inner_color);
+    }
+
+    pub fn draw_text(text: &str, x: f32, y: f32, font_size: u16, color: Color) {
+        draw_text_ex(
+            text,
+            x,
+            y,
+            TextParams {
+                font_size,
+                color,
+                ..Default::default()
+            },
+        );
+    }
+
+    pub fn animate_fields_demolishion(fields: &Vec<&Field>) {
+        GraphicController::draw_fields(fields);
     }
 
     pub fn get_skin_for_schema(
@@ -92,45 +135,6 @@ impl GraphicController {
         let x_normalized = x as usize % SKIN_SIDE;
         let y_normalized = y as usize % SKIN_SIDE;
         NATURAL[y_normalized][x_normalized]
-    }
-
-    pub fn draw_text_with_outline(
-        text: &str,
-        x: f32,
-        y: f32,
-        font_size: u16,
-        inner_color: Color,
-        outer_color: Color,
-        border_width: u16,
-    ) {
-        GraphicController::draw_text(
-            text,
-            x - border_width as f32 / 2.0,
-            y - border_width as f32 / 2.0,
-            font_size,
-            outer_color,
-        );
-        GraphicController::draw_text(
-            text,
-            x + border_width as f32 / 2.0,
-            y + border_width as f32 / 2.0,
-            font_size,
-            outer_color,
-        );
-        GraphicController::draw_text(text, x, y, font_size, inner_color);
-    }
-
-    pub fn draw_text(text: &str, x: f32, y: f32, font_size: u16, color: Color) {
-        draw_text_ex(
-            text,
-            x,
-            y,
-            TextParams {
-                font_size,
-                color,
-                ..Default::default()
-            },
-        );
     }
 
     pub fn get_text_center(text: &str, font_size: u16) -> (f32, f32) {

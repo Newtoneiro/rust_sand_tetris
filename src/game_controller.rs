@@ -48,7 +48,11 @@ impl GameController {
             return ();
         }
 
-        self.map.tick();
+        let score_fields: Vec<(i32, i32)> = self.map.tick_and_get_score_fields();
+        if score_fields.len() > 0 {
+            self.draw_row_demolishion(&score_fields).await;
+            self.map.demolish_fields(&score_fields);
+        }
 
         let is_game_over = self
             .block_controller
@@ -91,13 +95,22 @@ impl GameController {
     async fn draw_game(&mut self) {
         GraphicController::draw_background();
         GraphicController::draw_block(self.block_controller.get_block_to_draw());
-        GraphicController::draw_fields(self.map.get_fields_to_draw());
+        GraphicController::draw_fields(&self.map.get_fields_to_draw());
 
         if self.is_game_over {
             self.display_game_over();
         }
 
         GraphicController::flush().await;
+    }
+
+    async fn draw_row_demolishion(&self, fields: &Vec<(i32, i32)>) {
+        let mut fields_to_demolish = Vec::new();
+        for (x, y) in fields {
+            fields_to_demolish.push(self.map.get_field(*x, *y).unwrap());
+        }
+
+        GraphicController::animate_fields_demolishion(&fields_to_demolish);
     }
 
     pub fn do_move(&mut self, key: KeyCode) {

@@ -79,19 +79,19 @@ impl Map {
         false
     }
 
-    pub fn get_fields_to_draw(&self) -> Vec<Field> {
-        let mut output: Vec<Field> = Vec::new();
+    pub fn get_fields_to_draw(&self) -> Vec<&Field> {
+        let mut output: Vec<&Field> = Vec::new();
         for y in 0..self.height {
             for x in 0..self.width {
                 if self.get_field(x, y).unwrap().do_draw() {
-                    output.push(self.get_field(x, y).unwrap().clone())
+                    output.push(self.get_field(x, y).unwrap())
                 }
             }
         }
         output
     }
 
-    pub fn tick(&mut self) {
+    pub fn tick_and_get_score_fields(&mut self) -> Vec<(i32, i32)> {
         for y in (0..self.height).rev() {
             for x in (&self.get_random_row_order()).into_iter() {
                 if !self.get_field(*x, y).unwrap().is_empty() {
@@ -106,11 +106,18 @@ impl Map {
                         self.change_field(new_x, new_y, field_color, new_group_id);
                         self.change_field(*x, y, BACKGROUND_COLOR, 0);
 
-                        self.perform_row_demolishion(new_group_id, group_id);
+                        let groups = Vec::from([new_group_id, group_id]); // Combine them because not every group from the block has yet been converted
+
+                        let fields_for_demolishion = self.get_fields_for_demolishion(&groups);
+                        if fields_for_demolishion.len() > 0 {
+                            return fields_for_demolishion;
+                        }
                     }
                 }
             }
         }
+
+        Vec::new()
     }
 
     fn get_new_group(
@@ -205,21 +212,22 @@ impl Map {
                 == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
-    fn perform_row_demolishion(&mut self, group_id: u32, old_group_id: u32) {
-        if self.is_row_complete(group_id) {
-            self.demolish_groups(Vec::from([group_id, old_group_id]));
+    fn get_fields_for_demolishion(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+        if self.is_row_complete(group_ids) {
+            return self.get_fields_for_groups(group_ids);
         }
+        Vec::new()
     }
 
-    fn is_row_complete(&self, group_id: u32) -> bool {
+    fn is_row_complete(&self, group_ids: &Vec<u32>) -> bool {
         let mut touches_left_wall = false;
         let mut touches_right_wall = false;
 
         for y in 0..self.height {
-            if self.get_field(0, y).unwrap().get_group_id() == group_id {
+            if group_ids.contains(&self.get_field(0, y).unwrap().get_group_id()) {
                 touches_left_wall = true;
             }
-            if self.get_field(self.width - 1, y).unwrap().get_group_id() == group_id {
+            if group_ids.contains(&self.get_field(self.width - 1, y).unwrap().get_group_id()) {
                 touches_right_wall = true;
             }
         }
@@ -227,13 +235,13 @@ impl Map {
         touches_left_wall && touches_right_wall
     }
 
-    fn demolish_groups(&mut self, group_ids: Vec<u32>) {
-        for (x, y) in self.get_fields_for_group(&group_ids) {
-            self.change_field(x, y, BACKGROUND_COLOR, 0);
+    pub fn demolish_fields(&mut self, fields_coords: &Vec<(i32, i32)>) {
+        for (x, y) in fields_coords {
+            self.change_field(*x, *y, BACKGROUND_COLOR, 0);
         }
     }
 
-    fn get_fields_for_group(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+    fn get_fields_for_groups(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
 
         for y in 0..self.height {
@@ -564,12 +572,12 @@ mod test {
         map.change_field(30, 15, RED, 0);
         map.change_field(100, 0, RED, 0);
 
-        let fields_to_draw: Vec<Field> = map.get_fields_to_draw();
+        let fields_to_draw: Vec<&Field> = map.get_fields_to_draw();
 
         assert_eq!(fields_to_draw.len(), 3);
-        assert!(fields_to_draw.contains(&Field::new(40, 20, RED, 0)));
-        assert!(fields_to_draw.contains(&Field::new(30, 15, RED, 0)));
-        assert!(fields_to_draw.contains(&Field::new(100, 0, RED, 0)));
+        assert!(fields_to_draw.contains(&&Field::new(40, 20, RED, 0)));
+        assert!(fields_to_draw.contains(&&Field::new(30, 15, RED, 0)));
+        assert!(fields_to_draw.contains(&&Field::new(100, 0, RED, 0)));
     }
 
     #[test]
@@ -577,7 +585,7 @@ mod test {
         let mut map: Map = Map::new(200, 400);
         map.change_field(40, 20, RED, 0);
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 1);
         assert_eq!(map.get_field(40, 20).unwrap().get_color(), BACKGROUND_COLOR);
@@ -593,7 +601,7 @@ mod test {
         map.change_field(5, 9, RED, 0); // Grain under
         map.change_field(5, 8, RED, 0); // Grain above
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 2);
         assert_eq!(map.get_field(5, 9).unwrap().get_color(), RED);
@@ -615,7 +623,7 @@ mod test {
         map.change_field(0, 9, RED, 0); // Grain under
         map.change_field(0, 8, RED, 0); // Grain above
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 2);
         assert_eq!(map.get_field(0, 9).unwrap().get_color(), RED);
@@ -631,7 +639,7 @@ mod test {
         map.change_field(0, 9, RED, 0); // left Grain above
         map.change_field(0, 8, RED, 0); // left Grain above
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 4);
         assert_eq!(map.get_field(1, 9).unwrap().get_color(), RED);
@@ -647,7 +655,7 @@ mod test {
         map.change_field(9, 9, RED, 0); // Grain under
         map.change_field(9, 8, RED, 0); // Grain above
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 2);
         assert_eq!(map.get_field(9, 9).unwrap().get_color(), RED);
@@ -663,7 +671,7 @@ mod test {
         map.change_field(9, 9, RED, 0); // right Grain above
         map.change_field(9, 8, RED, 0); // right Grain above
 
-        map.tick();
+        map.tick_and_get_score_fields();
 
         assert_eq!(map.get_fields_to_draw().len(), 4);
         assert_eq!(map.get_field(8, 9).unwrap().get_color(), RED);
