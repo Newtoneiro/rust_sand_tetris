@@ -5,7 +5,6 @@ use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
 use crate::constants::colors::{
     BACKGROUND_COLOR, BLUE, BLUE_VAR, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR,
 };
-use crate::constants::interface_constants::{H_BORDER_OFFSET, V_BORDER_OFFSET};
 use crate::constants::map_constants::GRAIN_SIDE_SIZE;
 use crate::field::Field;
 
