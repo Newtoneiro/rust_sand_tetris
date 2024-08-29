@@ -3,11 +3,11 @@ use macroquad::color::Color;
 use rand::Rng;
 
 use crate::{
-    objects::block::{Block, BlockType},
     constants::{
         block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS, PREVIEW_BLOCK_CHUNK_SIDE},
         colors::{BLUE, GREEN, RED, YELLOW},
     },
+    objects::block::{Block, BlockType},
     objects::map::{ColisionType, Map},
 };
 

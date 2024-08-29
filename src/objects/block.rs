@@ -118,13 +118,13 @@ mod test {
     #[test]
     fn can_rotate() {
         for non_rotable_type in [
-                BlockType::LBlock,
-                BlockType::RevLBlock,
-                BlockType::ZBlock,
-                BlockType::RevZBlock,
-                BlockType::IBlock,
-                BlockType::TBlock,
-            ] {
+            BlockType::LBlock,
+            BlockType::RevLBlock,
+            BlockType::ZBlock,
+            BlockType::RevZBlock,
+            BlockType::IBlock,
+            BlockType::TBlock,
+        ] {
             let b: Block = Block::new(non_rotable_type);
 
             assert!(b.can_rotate());

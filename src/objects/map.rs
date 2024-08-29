@@ -1,16 +1,9 @@
 use macroquad::color::Color;
+use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::collections::VecDeque;
-use rand::{
-    seq::SliceRandom,
-    thread_rng,
-    Rng,
-};
 
 use crate::{
-    constants::{
-        block_constants::BLOCK_CHUNK_SIDE,
-        colors::BACKGROUND_COLOR,
-    },
+    constants::{block_constants::BLOCK_CHUNK_SIDE, colors::BACKGROUND_COLOR},
     controllers::graphic_controller::GraphicController,
     objects::field::Field,
 };
@@ -519,9 +512,7 @@ impl Map {
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::{
-        BLUE, RED, WHITE, YELLOW, YELLOW_DARK
-    };
+    use crate::constants::colors::{BLUE, RED, WHITE, YELLOW, YELLOW_DARK};
 
     use super::*;
 
@@ -577,7 +568,7 @@ mod test {
 
         let field1: Option<&Field> = map.get_field(-1, 40);
         let field2: Option<&Field> = map.get_field(0, 400);
-        
+
         assert!(field1.is_none());
         assert!(field2.is_none());
     }
@@ -655,7 +646,7 @@ mod test {
 
         assert_eq!(new_group, 1);
     }
-    
+
     #[test]
     fn get_new_group_diagonaly() {
         let mut map: Map = Map::new(10, 10);
@@ -687,7 +678,7 @@ mod test {
         map.change_field(0, 0, YELLOW, 1);
         map.change_field(2, 0, YELLOW, 2);
         map.change_field(0, 1, BLUE, 3);
-        
+
         map.change_field(1, 0, YELLOW, 4);
 
         let groups = map.get_adjacent_groups((1, 0), (1, 0));
@@ -756,7 +747,7 @@ mod test {
     #[test]
     fn is_valid_neighbour_for_bfs() {
         let mut map: Map = Map::new(10, 10);
-        /*  
+        /*
             [Ys]*Y*      Ys -> yellow with the same group
             [Y][Yd][B]   Yd -> Dark yellow
         */
@@ -797,7 +788,7 @@ mod test {
             1|#   #
             2|# # #
               0 1 2
-        */   
+        */
 
         map.change_field(0, 0, YELLOW, 1);
         map.change_field(0, 1, YELLOW, 1);
@@ -884,7 +875,7 @@ mod test {
         }
         let fields = map.get_fields_for_groups(&Vec::from([1]));
         let fields_empty = map.get_fields_for_groups(&Vec::from([2]));
-        
+
         assert_eq!(fields.len(), 10);
         for x in 0..10 {
             assert!(fields.contains(&(x, 0)));
@@ -1160,7 +1151,7 @@ mod test {
     #[test]
     fn clear() {
         let mut map: Map = Map::new(10, 10);
-        
+
         map.change_field(0, 0, RED, 0);
         map.current_group_id = 1;
 

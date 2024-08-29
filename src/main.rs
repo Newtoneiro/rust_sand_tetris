@@ -1,6 +1,6 @@
+mod constants;
 mod controllers;
 mod objects;
-mod constants;
 
 use constants::window_constants::{WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH};
 use controllers::game_controller::GameController;
@@ -20,7 +20,7 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut gc: GameController = GameController::new();
     gc.reset_game();
-    
+
     loop {
         gc.tick().await;
         for &key in &[KeyCode::D, KeyCode::A, KeyCode::S] {
