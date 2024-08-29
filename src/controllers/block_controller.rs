@@ -1,3 +1,7 @@
+use bounded_vec_deque::BoundedVecDeque;
+use macroquad::color::Color;
+use rand::Rng;
+
 use crate::{
     objects::block::{Block, BlockType},
     constants::{
@@ -6,9 +10,6 @@ use crate::{
     },
     objects::map::{ColisionType, Map},
 };
-use bounded_vec_deque::BoundedVecDeque;
-use macroquad::color::Color;
-use rand::Rng;
 
 pub struct BlockController {
     block_center_pos: (i32, i32),
@@ -25,7 +26,14 @@ impl BlockController {
         }
     }
 
-    pub fn get_new_block(&mut self) {
+    pub fn init_block_queue(&mut self) {
+        self.block_queue.clear();
+        self.color_queue.clear();
+        self.get_new_block(); // Current
+        self.get_new_block(); // Previous
+    }
+
+    fn get_new_block(&mut self) {
         self.block_queue
             .push_front(BlockController::generate_random_block());
         self.color_queue
@@ -241,10 +249,7 @@ impl BlockController {
     }
 
     pub fn clear(&mut self) {
-        self.block_queue.clear();
-        self.color_queue.clear();
-        self.get_new_block(); // Current
-        self.get_new_block(); // Next
+        self.init_block_queue();
     }
 }
 
@@ -262,29 +267,49 @@ mod test {
     }
 
     #[test]
-    fn block_controller_move_down() {
+    fn init_block_queue() {
         let mut bc: BlockController = BlockController::new();
-        let mut map: Map = Map::new(200, 400);
-        let starting_pos = BLOCK_STARTING_POS;
 
-        bc.get_new_block();
-        bc.move_down(&mut map);
+        bc.block_center_pos = (0, 0);
+        assert_eq!(bc.block_center_pos, (0, 0));
 
-        assert_eq!(bc.block_center_pos, (starting_pos.0, starting_pos.1 + 1));
+        bc.init_block_queue();
+        assert_eq!(bc.block_queue.len(), 2);
+        assert_eq!(bc.color_queue.len(), 2);
+        assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
     }
 
     #[test]
     fn get_new_block() {
         let mut bc: BlockController = BlockController::new();
 
+        bc.block_center_pos = (0, 0);
+        assert_eq!(bc.block_center_pos, (0, 0));
+
         bc.get_new_block();
         assert_eq!(bc.block_queue.len(), 1);
+        assert_eq!(bc.color_queue.len(), 1);
+        assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
         bc.get_new_block();
         assert_eq!(bc.block_queue.len(), 2);
+        assert_eq!(bc.color_queue.len(), 2);
+        assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
         bc.get_new_block();
-        assert_eq!(bc.block_queue.len(), 3);
-        bc.get_new_block();
-        assert_eq!(bc.block_queue.len(), 3);
+        assert_eq!(bc.block_queue.len(), 2);
+        assert_eq!(bc.color_queue.len(), 2);
+        assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
+    }
+
+    #[test]
+    fn block_controller_move_down() {
+        let mut bc: BlockController = BlockController::new();
+        let mut map: Map = Map::new(200, 400);
+        let starting_pos = BLOCK_STARTING_POS;
+
+        bc.init_block_queue();
+        bc.move_down(&mut map);
+
+        assert_eq!(bc.block_center_pos, (starting_pos.0, starting_pos.1 + 1));
     }
 
     #[test]
@@ -293,7 +318,7 @@ mod test {
         let mut map: Map = Map::new(200, 400);
         let starting_pos = BLOCK_STARTING_POS;
 
-        bc.get_new_block();
+        bc.init_block_queue();
         bc.move_right(&mut map);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 + 1, starting_pos.1));
@@ -305,7 +330,7 @@ mod test {
         let mut map: Map = Map::new(200, 400);
         let starting_pos = BLOCK_STARTING_POS;
 
-        bc.get_new_block();
+        bc.init_block_queue();
         bc.move_left(&mut map);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 - 1, starting_pos.1));

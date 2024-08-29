@@ -20,25 +20,21 @@ fn window_conf() -> Conf {
 async fn main() {
     let mut gc: GameController = GameController::new();
     gc.reset_game();
+    
     loop {
         gc.tick().await;
-        if is_key_down(KeyCode::D) {
-            gc.do_move(KeyCode::D)
+        for &key in &[KeyCode::D, KeyCode::A, KeyCode::S] {
+            if is_key_down(key) {
+                gc.do_move(key);
+            }
         }
-        if is_key_down(KeyCode::A) {
-            gc.do_move(KeyCode::A)
-        }
-        if is_key_down(KeyCode::S) {
-            gc.do_move(KeyCode::S)
-        }
-        if is_key_pressed(KeyCode::E) {
-            gc.do_move(KeyCode::E)
-        }
-        if is_key_pressed(KeyCode::Q) {
-            gc.do_move(KeyCode::Q)
+        for &key in &[KeyCode::E, KeyCode::Q] {
+            if is_key_pressed(key) {
+                gc.do_move(key);
+            }
         }
         if is_key_pressed(KeyCode::R) {
-            gc.reset_game()
+            gc.reset_game();
         }
     }
 }

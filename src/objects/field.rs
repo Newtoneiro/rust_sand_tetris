@@ -77,4 +77,41 @@ mod test {
         assert_eq!(field_dont.do_draw(), false);
         assert_eq!(field_do.do_draw(), true);
     }
+
+    #[test]
+    fn is_empty() {
+        let field_empty: Field = Field::new(1, 2, BACKGROUND_COLOR, 0);
+        let field_not_empty: Field = Field::new(1, 2, RED, 0);
+
+        assert_eq!(field_empty.is_empty(), true);
+        assert_eq!(field_not_empty.is_empty(), false);
+    }
+
+    #[test]
+    fn set_color() {
+        let mut field: Field = Field::new(1, 2, BACKGROUND_COLOR, 0);
+
+        field.set_color(RED);
+
+        assert_eq!(field.get_color(), RED);
+    }
+
+    #[test]
+    fn set_group_id() {
+        let mut field: Field = Field::new(1, 2, BACKGROUND_COLOR, 0);
+
+        field.set_group_id(1);
+
+        assert_eq!(field.get_group_id(), 1);
+    }
+
+    #[test]
+    fn partial_eq() {
+        let field1: Field = Field::new(1, 2, BACKGROUND_COLOR, 0);
+        let field2: Field = Field::new(1, 2, BACKGROUND_COLOR, 0);
+        let field3: Field = Field::new(1, 2, RED, 0);
+
+        assert!(field1 == field2);
+        assert!(field1 != field3);
+    }
 }

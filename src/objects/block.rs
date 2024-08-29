@@ -3,8 +3,8 @@ use crate::constants::block_schemas;
 #[derive(Clone)]
 pub struct Block {
     schema: Vec<(i8, i8)>,
-    rotation: u8,
     block_type: BlockType,
+    rotation: u8,
 }
 
 #[derive(Clone, PartialEq)]
@@ -100,10 +100,35 @@ mod test {
     use super::*;
 
     #[test]
-    fn create_lblock() {
+    fn create_lblock_simple() {
         let lb: Block = Block::new(BlockType::LBlock);
 
         assert_eq!(lb.get_schema(), block_schemas::L_BLOCK);
+    }
+
+    #[test]
+    fn can_not_rotate() {
+        for non_rotable_type in [BlockType::SquareBlock] {
+            let b: Block = Block::new(non_rotable_type);
+
+            assert!(!b.can_rotate());
+        }
+    }
+
+    #[test]
+    fn can_rotate() {
+        for non_rotable_type in [
+                BlockType::LBlock,
+                BlockType::RevLBlock,
+                BlockType::ZBlock,
+                BlockType::RevZBlock,
+                BlockType::IBlock,
+                BlockType::TBlock,
+            ] {
+            let b: Block = Block::new(non_rotable_type);
+
+            assert!(b.can_rotate());
+        }
     }
 
     #[test]
