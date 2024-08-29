@@ -7,8 +7,10 @@ use std::collections::VecDeque;
 use crate::constants::block_constants::BLOCK_CHUNK_SIDE;
 use crate::constants::colors::BACKGROUND_COLOR;
 use crate::constants::map_constants::{MAP_HEIGHT, MAP_WIDTH};
-use crate::field::Field;
-use crate::graphic_controller::GraphicController;
+use crate::controllers::graphic_controller::GraphicController;
+
+use super::field::Field;
+
 
 pub struct Map {
     width: i32,

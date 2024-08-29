@@ -1,13 +1,9 @@
-mod block;
-mod block_controller;
+mod controllers;
+mod objects;
 mod constants;
-mod field;
-mod game_controller;
-mod graphic_controller;
-mod map;
 
 use constants::window_constants::{WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH};
-use game_controller::GameController;
+use controllers::game_controller::GameController;
 use macroquad::prelude::*;
 
 fn window_conf() -> Conf {

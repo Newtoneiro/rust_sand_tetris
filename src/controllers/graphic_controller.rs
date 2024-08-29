@@ -1,12 +1,14 @@
 use macroquad::prelude::*;
 
-use crate::constants::block_constants::{BLOCK_CHUNK_SIDE, PREVIEW_BLOCK_CHUNK_SIDE};
-use crate::constants::block_skins::{NATURAL, SKIN_SIDE};
-use crate::constants::colors::{
-    BACKGROUND_COLOR, BLUE, BLUE_VAR, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR,
+use crate::{
+    constants::{
+        block_constants::{BLOCK_CHUNK_SIDE, PREVIEW_BLOCK_CHUNK_SIDE},
+        block_skins::{NATURAL, SKIN_SIDE},
+        colors::{BACKGROUND_COLOR, BLUE, BLUE_VAR, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR},
+        map_constants::GRAIN_SIDE_SIZE,
+    },
+    objects::field::Field,
 };
-use crate::constants::map_constants::GRAIN_SIDE_SIZE;
-use crate::field::Field;
 
 pub struct GraphicController {}
 

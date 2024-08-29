@@ -1,9 +1,12 @@
-use ::rand::seq::SliceRandom;
+use rand::seq::SliceRandom;
 use ::rand::thread_rng;
 use macroquad::{color::Color, input::KeyCode};
 
 use crate::{
-    block_controller::BlockController,
+    controllers::{
+        block_controller::BlockController,
+        graphic_controller::GraphicController,
+    },
     constants::{
         animation_constants::DEMOLISHION_CHUNK_SIZE,
         colors::{BLACK, WHITE},
@@ -14,9 +17,10 @@ use crate::{
         },
         map_constants::{MAP_HEIGHT, MAP_WIDTH},
     },
-    field::Field,
-    graphic_controller::GraphicController,
-    map::Map,
+    objects::{
+        field::Field,
+        map::Map,
+    }
 };
 
 pub struct GameController {
