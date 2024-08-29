@@ -10,7 +10,6 @@ use crate::{
     constants::{
         block_constants::BLOCK_CHUNK_SIDE,
         colors::BACKGROUND_COLOR,
-        map_constants::{MAP_HEIGHT, MAP_WIDTH},
     },
     controllers::graphic_controller::GraphicController,
     objects::field::Field,
@@ -53,16 +52,6 @@ impl Map {
         grid
     }
 
-    pub fn add_field(&mut self, x: i32, y: i32, color: Color, group_id: u32) {
-        match self.get_field(x, y) {
-            Some(_) => {
-                self.grid[y as usize][x as usize].set_color(color);
-                self.grid[y as usize][x as usize].set_group_id(group_id);
-            }
-            None => (),
-        };
-    }
-
     pub fn get_field(&self, x: i32, y: i32) -> Option<&Field> {
         if !self.check_coords_in_bounds(x, y) {
             return None;
@@ -99,18 +88,18 @@ impl Map {
 
     pub fn tick_and_get_score_fields(&mut self) -> Vec<(i32, i32)> {
         for y in (0..self.height).rev() {
-            for x in (&self.get_random_row_order()).into_iter() {
-                if !self.get_field(*x, y).unwrap().is_empty() {
-                    let (new_x, new_y) = self.get_new_pos(*x, y);
-                    if (new_x, new_y) != (*x, y) {
-                        let old_pos_field = self.get_field(*x, y).unwrap();
+            for x in self.get_random_row_order() {
+                if !self.get_field(x, y).unwrap().is_empty() {
+                    let (new_x, new_y) = self.get_new_pos(x, y);
+                    if (new_x, new_y) != (x, y) {
+                        let old_pos_field = self.get_field(x, y).unwrap();
                         let field_color = old_pos_field.get_color();
                         let group_id = old_pos_field.get_group_id();
 
-                        let new_group_id = self.get_new_group((new_x, new_y), (*x, y), group_id);
+                        let new_group_id = self.get_new_group((new_x, new_y), (x, y), group_id);
 
                         self.change_field(new_x, new_y, field_color, new_group_id);
-                        self.change_field(*x, y, BACKGROUND_COLOR, 0);
+                        self.change_field(x, y, BACKGROUND_COLOR, 0);
 
                         let groups = Vec::from([new_group_id, group_id]); // Combine them because not every group from the block has yet been converted
 
@@ -148,7 +137,7 @@ impl Map {
 
     fn get_adjacent_groups(&mut self, new_pos: (i32, i32), old_pos: (i32, i32)) -> Vec<u32> {
         let mut output = Vec::new();
-        for neighbour in self.get_field_neighbours(new_pos.0, new_pos.1) {
+        for neighbour in self.get_field_neighbors(new_pos.0, new_pos.1) {
             if self.check_coords_in_bounds(neighbour.0, neighbour.1) {
                 if self.is_valid_neighbour(new_pos, old_pos, (neighbour.0, neighbour.1)) {
                     let neighbour_group_id = self
@@ -166,17 +155,17 @@ impl Map {
 
     fn is_valid_neighbour(
         &self,
-        new_parent_pos: (i32, i32),
-        old_parent_pos: (i32, i32),
+        new_pos: (i32, i32),
+        old_pos: (i32, i32),
         neighbour_pos: (i32, i32),
     ) -> bool {
-        let new_parent_field = self.get_field(new_parent_pos.0, new_parent_pos.1).unwrap();
-        let old_parent_field = self.get_field(old_parent_pos.0, old_parent_pos.1).unwrap();
+        let new_field = self.get_field(new_pos.0, new_pos.1).unwrap();
+        let old_field = self.get_field(old_pos.0, old_pos.1).unwrap();
         let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
 
         neighbour_field.get_group_id() != 0
-            && new_parent_field.get_group_id() != neighbour_field.get_group_id()
-            && GraphicController::normalize_color(old_parent_field.get_color())
+            && new_field.get_group_id() != neighbour_field.get_group_id()
+            && GraphicController::normalize_color(old_field.get_color())
                 == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
@@ -191,7 +180,7 @@ impl Map {
         let mut queue = VecDeque::from([(x, y)]);
         while queue.len() > 0 {
             let (cur_x, cur_y) = queue.pop_back().unwrap();
-            for neighbour in self.get_field_neighbours(cur_x, cur_y) {
+            for neighbour in self.get_field_neighbors(cur_x, cur_y) {
                 self.grid[cur_y as usize][cur_x as usize].set_group_id(new_group_id);
                 checked.push((cur_x, cur_y));
                 if !checked.contains(&neighbour)
@@ -205,16 +194,16 @@ impl Map {
 
     fn is_valid_neighbour_for_bfs(
         &self,
-        parent_pos: (i32, i32),
+        pos: (i32, i32),
         neighbour_pos: (i32, i32),
         new_group_id: u32,
     ) -> bool {
-        let parent_field = self.get_field(parent_pos.0, parent_pos.1).unwrap();
+        let field = self.get_field(pos.0, pos.1).unwrap();
         let neighbour_field = self.get_field(neighbour_pos.0, neighbour_pos.1).unwrap();
 
         neighbour_field.get_group_id() != 0
             && neighbour_field.get_group_id() != new_group_id
-            && GraphicController::normalize_color(parent_field.get_color())
+            && GraphicController::normalize_color(field.get_color())
                 == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
@@ -272,7 +261,7 @@ impl Map {
         group_size
     }
 
-    fn get_field_neighbours(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
+    fn get_field_neighbors(&self, x: i32, y: i32) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
         for (n_x, n_y) in [
             (-1, 0),
@@ -444,7 +433,7 @@ impl Map {
             .unwrap();
         let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
 
-        bottom_border > MAP_HEIGHT
+        bottom_border > self.height
     }
 
     fn is_block_coliding_left_border(
@@ -474,7 +463,7 @@ impl Map {
 
         let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * BLOCK_CHUNK_SIDE;
 
-        right_border > MAP_WIDTH
+        right_border > self.width
     }
 
     fn is_block_coliding_with_sand(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
@@ -493,7 +482,7 @@ impl Map {
 
     pub fn spawn_block(&mut self, schema: Vec<(i32, i32)>, color: Color) {
         for (x, y, color) in GraphicController::get_skin_for_schema(schema, color) {
-            self.add_field(x, y, color, self.current_group_id);
+            self.change_field(x, y, color, self.current_group_id);
         }
         self.current_group_id += 1;
     }
@@ -530,18 +519,38 @@ impl Map {
 
 #[cfg(test)]
 mod test {
-    use macroquad::color::RED;
+    use crate::constants::colors::{
+        BLUE, RED, YELLOW, YELLOW_DARK
+    };
 
     use super::*;
 
     #[test]
     fn create_map() {
-        let map: Map = Map::new(200, 400);
+        let map = Map::new(200, 400);
+        let map: Map = map;
 
         assert_eq!(map.width, 200);
         assert_eq!(map.height, 400);
         assert_eq!(map.grid.len(), 400);
         assert_eq!(map.grid.get(0).unwrap().len(), 200);
+        assert_eq!(map.current_group_id, 1);
+    }
+
+    #[test]
+    fn create_grid() {
+        let grid = Map::create_grid(10, 10);
+
+        assert_eq!(grid.len(), 10);
+        assert_eq!(grid.get(0).unwrap().len(), 10);
+
+        for (x, y) in [(0, 0), (2, 5), (9, 9)] {
+            let field = grid.get(y).unwrap().get(x).unwrap();
+            assert_eq!(field.get_x(), x as i32);
+            assert_eq!(field.get_y(), y as i32);
+            assert_eq!(field.get_color(), BACKGROUND_COLOR);
+            assert_eq!(field.get_group_id(), 0);
+        }
     }
 
     #[test]
@@ -554,6 +563,8 @@ mod test {
 
         assert_eq!(field_middle.get_x(), 20);
         assert_eq!(field_middle.get_y(), 40);
+        assert_eq!(field_middle.get_color(), BACKGROUND_COLOR);
+        assert_eq!(field_middle.get_group_id(), 0);
         assert_eq!(field_min.get_x(), 0);
         assert_eq!(field_min.get_y(), 0);
         assert_eq!(field_max.get_x(), 199);
@@ -564,10 +575,49 @@ mod test {
     fn get_field_out_of_bounds() {
         let map: Map = Map::new(200, 400);
 
-        for (x, y) in [(200, 0), (201, 40), (0, 400), (100, 401)] {
-            let field_middle = map.get_field(x, y);
+        let field1: Option<&Field> = map.get_field(-1, 40);
+        let field2: Option<&Field> = map.get_field(0, 400);
+        
+        assert!(field1.is_none());
+        assert!(field2.is_none());
+    }
 
-            assert!(field_middle.is_none());
+    #[test]
+    fn change_field() {
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, RED, 2);
+        map.change_field(9, 6, RED, 3);
+
+        let field1: &Field = map.get_field(0, 0).unwrap();
+        let field2: &Field = map.get_field(9, 6).unwrap();
+
+        assert_eq!(field1.get_color(), RED);
+        assert_eq!(field1.get_group_id(), 2);
+        assert_eq!(field2.get_color(), RED);
+        assert_eq!(field2.get_group_id(), 3);
+    }
+
+    #[test]
+    fn change_field_out_of_bounds() {
+        let mut map: Map = Map::new(200, 400);
+
+        map.change_field(-1, 0, RED, 2);
+        map.change_field(0, 400, RED, 3);
+
+        // changing field out of bounds has no effect.
+    }
+
+    #[test]
+    fn check_coords_in_bounds() {
+        let map: Map = Map::new(10, 10);
+
+        for (x, y) in [(0, 0), (0, 9), (9, 0)] {
+            assert!(map.check_coords_in_bounds(x, y));
+        }
+
+        for (x, y) in [(-1, 0), (0, 10), (10, 0), (11, 11)] {
+            assert!(!map.check_coords_in_bounds(x, y));
         }
     }
 
@@ -584,6 +634,309 @@ mod test {
         assert!(fields_to_draw.contains(&&Field::new(40, 20, RED, 0)));
         assert!(fields_to_draw.contains(&&Field::new(30, 15, RED, 0)));
         assert!(fields_to_draw.contains(&&Field::new(100, 0, RED, 0)));
+    }
+
+    #[test]
+    fn get_fields_to_draw_empty() {
+        let map: Map = Map::new(200, 400);
+
+        let fields_to_draw: Vec<&Field> = map.get_fields_to_draw();
+
+        assert_eq!(fields_to_draw.len(), 0);
+    }
+
+    #[test]
+    fn get_new_group_horizontaly() {
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, RED, 1);
+        map.change_field(0, 1, RED, 2);
+        let new_group = map.get_new_group((0, 1), (0, 1), 2);
+
+        assert_eq!(new_group, 1);
+    }
+    
+    #[test]
+    fn get_new_group_diagonaly() {
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, RED, 1); // static Field
+        map.change_field(1, 1, RED, 2); // adjacent Field for get_new_group (moved from (1, 2))
+        let new_group = map.get_new_group((1, 1), (1, 1), 2);
+
+        assert_eq!(new_group, 1);
+    }
+
+    #[test]
+    fn get_new_group_no_change() {
+        // No change when arround multiple groups
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, RED, 1);
+        map.change_field(0, 2, RED, 2);
+        map.change_field(1, 2, RED, 3);
+        map.change_field(0, 1, RED, 4);
+        let new_group = map.get_new_group((0, 1), (0, 1), 2);
+
+        assert_eq!(new_group, 2);
+    }
+
+    #[test]
+    fn get_adjacent_groups() {
+        let mut map: Map = Map::new(10, 10);
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(2, 0, YELLOW, 2);
+        map.change_field(0, 1, BLUE, 3);
+        
+        map.change_field(1, 0, YELLOW, 4);
+
+        let groups = map.get_adjacent_groups((1, 0), (1, 0));
+        assert_eq!(groups.len(), 2);
+        assert!(groups.contains(&1));
+        assert!(groups.contains(&2));
+    }
+
+    #[test]
+    fn is_valid_neighbour() {
+        let mut map: Map = Map::new(10, 10);
+        /*  [Ys]*Y*      Ys -> yellow with the same group
+            [Y][Yd][B]   Yd -> Dark yellow
+         */
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(1, 0, YELLOW_DARK, 2);
+        map.change_field(2, 0, BLUE, 3);
+        map.change_field(0, 1, YELLOW, 3);
+
+        map.change_field(1, 1, YELLOW, 3);
+
+        assert!(map.is_valid_neighbour((1, 1), (1, 1), (0, 0)));
+        assert!(map.is_valid_neighbour((1, 1), (1, 1), (1, 0)));
+        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (2, 0)));
+        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (2, 1))); // Empty field
+        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (0, 1))); // Same group
+    }
+
+    #[test]
+    fn change_group_bfs() {
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(1, 0, YELLOW, 1);
+        map.change_field(0, 1, YELLOW, 2);
+        map.change_field(0, 2, YELLOW, 2);
+
+        map.change_group_bfs(0, 0, 2);
+
+        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(1, 0).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 1).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 2).unwrap().get_group_id(), 2);
+    }
+
+    #[test]
+    fn dont_change_group_bfs_for_bigger_group() {
+        let mut map: Map = Map::new(10, 10);
+
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(1, 0, YELLOW, 1);
+        map.change_field(2, 0, YELLOW, 1);
+        map.change_field(0, 1, YELLOW, 2);
+        map.change_field(0, 2, YELLOW, 2);
+
+        map.change_group_bfs(0, 0, 2);
+
+        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(1, 0).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(2, 0).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(0, 1).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 2).unwrap().get_group_id(), 2);
+    }
+
+    #[test]
+    fn is_valid_neighbour_for_bfs() {
+        let mut map: Map = Map::new(10, 10);
+        /*  [Ys]*Y*      Ys -> yellow with the same group
+            [Y][Yd][B]   Yd -> Dark yellow
+         */
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(1, 0, YELLOW_DARK, 2);
+        map.change_field(2, 0, BLUE, 3);
+        map.change_field(0, 1, YELLOW, 3);
+
+        map.change_field(1, 1, YELLOW, 3);
+
+        assert!(map.is_valid_neighbour_for_bfs((1, 1), (0, 0), 3));
+        assert!(map.is_valid_neighbour_for_bfs((1, 1), (1, 0), 3));
+        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (2, 0), 3));
+        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (0, 1), 3)); // Same group
+        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (2, 1), 3)); // Empty field
+    }
+
+    #[test]
+    fn get_fields_for_demolishion() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..10 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+
+        let fields_for_demolishion = map.get_fields_for_demolishion(&Vec::from([1]));
+        assert_eq!(fields_for_demolishion.len(), 10);
+        for x in 0..10 {
+            assert!(fields_for_demolishion.contains(&(x, 0)));
+        }
+    }
+
+    #[test]
+    fn get_fields_for_demolishion_more_complicated() {
+        let mut map: Map = Map::new(3, 3);
+        /*
+            # # #
+            #   #
+            #   #
+         */
+
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(0, 1, YELLOW, 1);
+        map.change_field(0, 2, YELLOW, 1);
+        map.change_field(1, 2, YELLOW, 1);
+        map.change_field(2, 0, YELLOW, 1);
+        map.change_field(2, 1, YELLOW, 1);
+        map.change_field(2, 2, YELLOW, 1);
+
+        let fields_for_demolishion = map.get_fields_for_demolishion(&Vec::from([1]));
+        assert_eq!(fields_for_demolishion.len(), 7);
+    }
+
+    #[test]
+    fn get_fields_for_demolishion_empty() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..9 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+
+        let fields_for_demolishion = map.get_fields_for_demolishion(&Vec::from([1]));
+        assert_eq!(fields_for_demolishion.len(), 0);
+    }
+
+    #[test]
+    fn is_row_complete() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..10 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+        for x in 0..9 {
+            map.change_field(x, 1, YELLOW, 2);
+        }
+
+        assert!(map.is_row_complete(&Vec::from([1])));
+        assert!(!map.is_row_complete(&Vec::from([2])));
+    }
+
+    #[test]
+    fn is_row_complete_complicated() {
+        let mut map: Map = Map::new(3, 3);
+        /*
+            # # #
+            #   #
+            #   #
+         */
+
+        map.change_field(0, 0, YELLOW, 1);
+        map.change_field(0, 1, YELLOW, 1);
+        map.change_field(0, 2, YELLOW, 1);
+        map.change_field(1, 2, YELLOW, 1);
+        map.change_field(2, 0, YELLOW, 1);
+        map.change_field(2, 1, YELLOW, 1);
+        map.change_field(2, 2, YELLOW, 1);
+
+        assert!(map.is_row_complete(&Vec::from([1])))
+    }
+
+    #[test]
+    fn demolish_fields() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..10 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+        let fields = map.get_fields_for_groups(&Vec::from([1]));
+        map.demolish_fields(&fields);
+
+        for (x, y) in fields {
+            assert_eq!(map.get_field(x, y).unwrap().get_color(), BACKGROUND_COLOR);
+            assert_eq!(map.get_field(x, y).unwrap().get_group_id(), 0);
+        }
+    }
+
+    #[test]
+    fn get_fields_for_groups() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..10 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+        let fields = map.get_fields_for_groups(&Vec::from([1]));
+        let fields_empty = map.get_fields_for_groups(&Vec::from([2]));
+        
+        assert_eq!(fields.len(), 10);
+        for x in 0..10 {
+            assert!(fields.contains(&(x, 0)));
+        }
+        assert_eq!(fields_empty.len(), 0);
+    }
+
+    #[test]
+    fn get_group_size() {
+        let mut map: Map = Map::new(10, 10);
+
+        for x in 0..10 {
+            map.change_field(x, 0, YELLOW, 1);
+        }
+
+        assert_eq!(map.get_group_size(1), 10);
+        assert_eq!(map.get_group_size(2), 0);
+    }
+
+    #[test]
+    fn get_field_neighbors() {
+        let map: Map = Map::new(10, 10);
+
+        let neighbors = map.get_field_neighbors(1, 1);
+        assert_eq!(neighbors.len(), 8);
+        assert!(neighbors.contains(&(0, 0)));
+        assert!(neighbors.contains(&(1, 0)));
+        assert!(neighbors.contains(&(2, 0)));
+        assert!(neighbors.contains(&(0, 1)));
+        assert!(neighbors.contains(&(2, 1)));
+        assert!(neighbors.contains(&(0, 2)));
+        assert!(neighbors.contains(&(1, 2)));
+        assert!(neighbors.contains(&(2, 2)));
+    }
+
+    #[test]
+    fn get_field_neighbors_corner() {
+        let map: Map = Map::new(10, 10);
+
+        let neighbors = map.get_field_neighbors(0, 0);
+        assert_eq!(neighbors.len(), 3);
+        assert!(neighbors.contains(&(1, 0)));
+        assert!(neighbors.contains(&(1, 1)));
+        assert!(neighbors.contains(&(0, 1)));
+    }
+
+    #[test]
+    fn get_random_row_order() {
+        let map: Map = Map::new(10, 10);
+
+        let order = map.get_random_row_order();
+
+        assert_eq!(order.len(), 10);
+        for i in 0..10 {
+            assert!(order.contains(&i));
+        }
     }
 
     #[test]
