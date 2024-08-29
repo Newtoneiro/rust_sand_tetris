@@ -22,7 +22,7 @@ pub struct Map {
     current_group_id: u32,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum ColisionType {
     BorderColision,
     SandColision,
@@ -520,7 +520,7 @@ impl Map {
 #[cfg(test)]
 mod test {
     use crate::constants::colors::{
-        BLUE, RED, YELLOW, YELLOW_DARK
+        BLUE, RED, WHITE, YELLOW, YELLOW_DARK
     };
 
     use super::*;
@@ -699,77 +699,79 @@ mod test {
     #[test]
     fn is_valid_neighbour() {
         let mut map: Map = Map::new(10, 10);
-        /*  [Ys]*Y*      Ys -> yellow with the same group
+        /*
+            [Ys]*Y*      Ys -> yellow with the same group
             [Y][Yd][B]   Yd -> Dark yellow
-         */
-        map.change_field(0, 0, YELLOW, 1);
-        map.change_field(1, 0, YELLOW_DARK, 2);
-        map.change_field(2, 0, BLUE, 3);
-        map.change_field(0, 1, YELLOW, 3);
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW_DARK, 2);
+        map.change_field(2, 9, BLUE, 3);
+        map.change_field(0, 8, YELLOW, 3);
 
-        map.change_field(1, 1, YELLOW, 3);
+        map.change_field(1, 8, YELLOW, 3);
 
-        assert!(map.is_valid_neighbour((1, 1), (1, 1), (0, 0)));
-        assert!(map.is_valid_neighbour((1, 1), (1, 1), (1, 0)));
-        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (2, 0)));
-        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (2, 1))); // Empty field
-        assert!(!map.is_valid_neighbour((1, 1), (1, 1), (0, 1))); // Same group
+        assert!(map.is_valid_neighbour((1, 8), (1, 8), (0, 9)));
+        assert!(map.is_valid_neighbour((1, 8), (1, 8), (1, 9)));
+        assert!(!map.is_valid_neighbour((1, 8), (1, 8), (2, 9)));
+        assert!(!map.is_valid_neighbour((1, 8), (1, 8), (2, 8))); // Empty field
+        assert!(!map.is_valid_neighbour((1, 8), (1, 8), (0, 8))); // Same group
     }
 
     #[test]
     fn change_group_bfs() {
         let mut map: Map = Map::new(10, 10);
 
-        map.change_field(0, 0, YELLOW, 1);
-        map.change_field(1, 0, YELLOW, 1);
-        map.change_field(0, 1, YELLOW, 2);
-        map.change_field(0, 2, YELLOW, 2);
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(0, 8, YELLOW, 2);
+        map.change_field(0, 7, YELLOW, 2);
 
-        map.change_group_bfs(0, 0, 2);
+        map.change_group_bfs(0, 9, 2);
 
-        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 2);
-        assert_eq!(map.get_field(1, 0).unwrap().get_group_id(), 2);
-        assert_eq!(map.get_field(0, 1).unwrap().get_group_id(), 2);
-        assert_eq!(map.get_field(0, 2).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 9).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(1, 9).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 8).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 7).unwrap().get_group_id(), 2);
     }
 
     #[test]
     fn dont_change_group_bfs_for_bigger_group() {
         let mut map: Map = Map::new(10, 10);
 
-        map.change_field(0, 0, YELLOW, 1);
-        map.change_field(1, 0, YELLOW, 1);
-        map.change_field(2, 0, YELLOW, 1);
-        map.change_field(0, 1, YELLOW, 2);
-        map.change_field(0, 2, YELLOW, 2);
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(0, 8, YELLOW, 2);
+        map.change_field(0, 7, YELLOW, 2);
 
-        map.change_group_bfs(0, 0, 2);
+        map.change_group_bfs(0, 9, 2);
 
-        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 1);
-        assert_eq!(map.get_field(1, 0).unwrap().get_group_id(), 1);
-        assert_eq!(map.get_field(2, 0).unwrap().get_group_id(), 1);
-        assert_eq!(map.get_field(0, 1).unwrap().get_group_id(), 2);
-        assert_eq!(map.get_field(0, 2).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 9).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(1, 9).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(2, 9).unwrap().get_group_id(), 1);
+        assert_eq!(map.get_field(0, 8).unwrap().get_group_id(), 2);
+        assert_eq!(map.get_field(0, 7).unwrap().get_group_id(), 2);
     }
 
     #[test]
     fn is_valid_neighbour_for_bfs() {
         let mut map: Map = Map::new(10, 10);
-        /*  [Ys]*Y*      Ys -> yellow with the same group
+        /*  
+            [Ys]*Y*      Ys -> yellow with the same group
             [Y][Yd][B]   Yd -> Dark yellow
-         */
-        map.change_field(0, 0, YELLOW, 1);
-        map.change_field(1, 0, YELLOW_DARK, 2);
-        map.change_field(2, 0, BLUE, 3);
-        map.change_field(0, 1, YELLOW, 3);
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW_DARK, 2);
+        map.change_field(2, 9, BLUE, 3);
+        map.change_field(0, 8, YELLOW, 3);
 
-        map.change_field(1, 1, YELLOW, 3);
+        map.change_field(1, 8, YELLOW, 3);
 
-        assert!(map.is_valid_neighbour_for_bfs((1, 1), (0, 0), 3));
-        assert!(map.is_valid_neighbour_for_bfs((1, 1), (1, 0), 3));
-        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (2, 0), 3));
-        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (0, 1), 3)); // Same group
-        assert!(!map.is_valid_neighbour_for_bfs((1, 1), (2, 1), 3)); // Empty field
+        assert!(map.is_valid_neighbour_for_bfs((1, 8), (0, 9), 3));
+        assert!(map.is_valid_neighbour_for_bfs((1, 8), (1, 9), 3));
+        assert!(!map.is_valid_neighbour_for_bfs((1, 8), (2, 9), 3));
+        assert!(!map.is_valid_neighbour_for_bfs((1, 8), (0, 8), 3)); // Same group
+        assert!(!map.is_valid_neighbour_for_bfs((1, 8), (2, 8), 3)); // Empty field
     }
 
     #[test]
@@ -791,10 +793,11 @@ mod test {
     fn get_fields_for_demolishion_more_complicated() {
         let mut map: Map = Map::new(3, 3);
         /*
-            # # #
-            #   #
-            #   #
-         */
+            0|#   #
+            1|#   #
+            2|# # #
+              0 1 2
+        */   
 
         map.change_field(0, 0, YELLOW, 1);
         map.change_field(0, 1, YELLOW, 1);
@@ -839,10 +842,11 @@ mod test {
     fn is_row_complete_complicated() {
         let mut map: Map = Map::new(3, 3);
         /*
-            # # #
-            #   #
-            #   #
-         */
+            0|#   #
+            1|#   #
+            2|# # #
+              0 1 2
+        */
 
         map.change_field(0, 0, YELLOW, 1);
         map.change_field(0, 1, YELLOW, 1);
@@ -937,6 +941,98 @@ mod test {
         for i in 0..10 {
             assert!(order.contains(&i));
         }
+    }
+
+    #[test]
+    fn get_new_pos_to_right() {
+        let mut map: Map = Map::new(10, 10);
+        /*
+            6| . ---- Block drops here
+            7|
+            8|[x]
+            9|[x][x][x]
+               0  1  2
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(0, 8, YELLOW, 1);
+
+        map.change_field(0, 6, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(0, 6), (0, 7));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(0, 7), (1, 8));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(1, 8), (1, 8));
+    }
+
+    #[test]
+    fn get_new_pos_to_left() {
+        let mut map: Map = Map::new(10, 10);
+        /*
+            6|       . ---- Block drops here
+            7|         [x]
+            8|      [x][x]
+            9|[x][x][x][x]
+               0  1  2  3
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(2, 8, YELLOW, 1);
+        map.change_field(3, 9, YELLOW, 1);
+        map.change_field(3, 8, YELLOW, 1);
+        map.change_field(3, 7, YELLOW, 1);
+
+        map.change_field(2, 6, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(2, 6), (2, 7));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(2, 7), (1, 8));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(1, 8), (1, 8));
+    }
+
+    #[test]
+    fn get_new_pos_random() {
+        let mut map: Map = Map::new(10, 10);
+        /*
+            7|    . ---- Block drops here
+            8|   [x]
+            9|[x][x][x]
+               0  1  2
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(1, 8, YELLOW, 1);
+
+        map.change_field(1, 7, YELLOW, 3); // Track this block
+
+        assert!([(0, 8), (2, 8)].contains(&map.get_new_pos(1, 7))); // Either drop to left or right
+    }
+
+    #[test]
+    fn get_new_pos_stuck() {
+        let mut map: Map = Map::new(10, 10);
+        /*
+            7|    . ---- Block drops here
+            8|[x]   [x]
+            9|[x][x][x]
+               0  1  2
+        */
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(0, 8, YELLOW, 1);
+        map.change_field(2, 8, YELLOW, 1);
+
+        map.change_field(1, 7, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(1, 7), (1, 8));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(1, 8), (1, 8));
     }
 
     #[test]
@@ -1038,5 +1134,39 @@ mod test {
         assert_eq!(map.get_field(9, 9).unwrap().get_color(), RED);
         assert_eq!(map.get_field(9, 8).unwrap().get_color(), RED);
         assert_eq!(map.get_field(7, 9).unwrap().get_color(), RED);
+    }
+
+    #[test]
+    fn is_game_over() {
+        let map: Map = Map::new(10, 10);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+
+        assert!(!map.is_game_over(&test_schema, (0, 0)));
+        assert!(!map.is_game_over(&test_schema, (0, BLOCK_CHUNK_SIDE)));
+        assert!(map.is_game_over(&test_schema, (0, -2 * BLOCK_CHUNK_SIDE)));
+    }
+
+    #[test]
+    fn spawn_block() {
+        let mut map: Map = Map::new(10, 10);
+        let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0), (1, 1)]);
+
+        map.spawn_block(test_schema, WHITE);
+
+        assert_eq!(map.get_field(0, 0).unwrap().get_color(), WHITE);
+        assert_eq!(map.get_field(1, 1).unwrap().get_color(), WHITE);
+    }
+
+    #[test]
+    fn clear() {
+        let mut map: Map = Map::new(10, 10);
+        
+        map.change_field(0, 0, RED, 0);
+        map.current_group_id = 1;
+
+        map.clear();
+
+        assert_eq!(map.get_field(0, 0).unwrap().get_color(), BACKGROUND_COLOR);
+        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 0);
     }
 }
