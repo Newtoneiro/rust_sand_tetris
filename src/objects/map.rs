@@ -208,13 +208,7 @@ impl Map {
         touches_left_wall && touches_right_wall
     }
 
-    pub fn demolish_fields(&mut self, fields_coords: &Vec<(i32, i32)>) {
-        for (x, y) in fields_coords {
-            self.change_field(*x, *y, BACKGROUND_COLOR, 0);
-        }
-    }
-
-    fn get_fields_for_groups(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+    pub fn get_fields_for_groups(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
         let output: Vec<(i32, i32)> = self
             .filter_fields(|field: &Field| group_ids.contains(&field.get_group_id()))
             .into_iter()
@@ -647,22 +641,6 @@ mod test {
         map.change_field(2, 2, YELLOW, 1);
 
         assert!(map.is_row_complete(&Vec::from([1])))
-    }
-
-    #[test]
-    fn demolish_fields() {
-        let mut map: Map = Map::new(10, 10);
-
-        for x in 0..10 {
-            map.change_field(x, 0, YELLOW, 1);
-        }
-        let fields = map.get_fields_for_groups(&Vec::from([1]));
-        map.demolish_fields(&fields);
-
-        for (x, y) in fields {
-            assert_eq!(map.get_field(x, y).unwrap().get_color(), BACKGROUND_COLOR);
-            assert_eq!(map.get_field_group_id(x, y).unwrap(), 0);
-        }
     }
 
     #[test]
