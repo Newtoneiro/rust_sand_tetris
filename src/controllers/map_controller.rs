@@ -3,7 +3,9 @@ use macroquad::color::Color;
 use rand::seq::SliceRandom;
 
 use crate::{
-    constants::colors::BACKGROUND_COLOR, controllers::graphic_controller::GraphicController, objects::{field::Field, map::Map}
+    constants::colors::BACKGROUND_COLOR,
+    controllers::graphic_controller::GraphicController,
+    objects::{field::Field, map::Map},
 };
 
 pub struct MapController {
@@ -62,7 +64,7 @@ impl MapController {
         fields_to_demolish
     }
 
-    pub fn can_move_down(
+    pub fn can_block_move_down(
         &self,
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
@@ -76,7 +78,7 @@ impl MapController {
         (true, ColisionType::NoColision)
     }
 
-    pub fn can_move_left(
+    pub fn can_block_move_left(
         &self,
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
@@ -90,7 +92,7 @@ impl MapController {
         (true, ColisionType::NoColision)
     }
 
-    pub fn can_move_right(
+    pub fn can_block_move_right(
         &self,
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
@@ -104,7 +106,7 @@ impl MapController {
         (true, ColisionType::NoColision)
     }
 
-    pub fn can_rotate(
+    pub fn can_block_rotate(
         &self,
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
@@ -123,7 +125,8 @@ impl MapController {
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
     ) -> bool {
-        self.is_block_coliding_bottom_border(schema, center_pos)
+        self.is_block_coliding_upper_border(schema, center_pos)
+            || self.is_block_coliding_bottom_border(schema, center_pos)
             || self.is_block_coliding_left_border(schema, center_pos)
             || self.is_block_coliding_right_border(schema, center_pos)
     }
@@ -133,10 +136,8 @@ impl MapController {
         schema: &Vec<(i8, i8)>,
         center_pos: (i32, i32),
     ) -> bool {
-        let upper_most_box: (i8, i8) = *schema
-            .iter()
-            .min_by_key(|schema_box| schema_box.1)
-            .unwrap();
+        let upper_most_box: (i8, i8) =
+            *schema.iter().min_by_key(|schema_box| schema_box.1).unwrap();
         let upper_border = center_pos.1 + (upper_most_box.1 as i32) * self.block_chunk_side;
 
         upper_border < 0
@@ -152,8 +153,8 @@ impl MapController {
             .max_by_key(|schema_box| schema_box.1)
             .unwrap();
         let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * self.block_chunk_side;
-        println!("bottom. {}", bottom_border >= self.map.get_height());
-        bottom_border > self.map.get_height()
+
+        bottom_border + 1 > self.map.get_height()
     }
 
     fn is_block_coliding_left_border(
@@ -167,7 +168,7 @@ impl MapController {
             .unwrap();
 
         let left_border = center_pos.0 + left_most_box.0 as i32 * self.block_chunk_side;
-        println!("left. {}", left_border < 0);
+
         left_border < 0
     }
 
@@ -182,8 +183,8 @@ impl MapController {
             .unwrap();
 
         let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * self.block_chunk_side;
-        println!("right. {}", right_border > self.map.get_width());
-        right_border > self.map.get_width()
+
+        right_border + 1 > self.map.get_width()
     }
 
     fn is_block_coliding_with_sand(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
@@ -217,8 +218,8 @@ impl MapController {
         for block_box in schema {
             let x: i32 = center_pos.0 + block_box.0 as i32 * self.block_chunk_side;
             let y: i32 = center_pos.1 + block_box.1 as i32 * self.block_chunk_side;
-            for x_offset in 0..=self.block_chunk_side {
-                for y_offset in 0..=self.block_chunk_side {
+            for x_offset in 0..self.block_chunk_side {
+                for y_offset in 0..self.block_chunk_side {
                     output.push((x + x_offset, y + y_offset));
                 }
             }
@@ -230,7 +231,7 @@ impl MapController {
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::{BACKGROUND_COLOR, RED};
+    use crate::constants::colors::{BACKGROUND_COLOR, RED, WHITE};
 
     use super::*;
 
@@ -261,7 +262,10 @@ mod test {
         mc.clear();
 
         assert_eq!(mc.current_group_id, 1);
-        assert_eq!(mc.map.get_field(0, 0).unwrap().get_color(), BACKGROUND_COLOR);
+        assert_eq!(
+            mc.map.get_field(0, 0).unwrap().get_color(),
+            BACKGROUND_COLOR
+        );
     }
 
     #[test]
@@ -275,7 +279,10 @@ mod test {
         mc.demolish_fields(&fields);
 
         for (x, y) in fields {
-            assert_eq!(mc.map.get_field(x, y).unwrap().get_color(), BACKGROUND_COLOR);
+            assert_eq!(
+                mc.map.get_field(x, y).unwrap().get_color(),
+                BACKGROUND_COLOR
+            );
             assert_eq!(mc.map.get_field_group_id(x, y).unwrap(), 0);
         }
     }
@@ -318,88 +325,89 @@ mod test {
     }
 
     #[test]
-    fn can_move_down() {
+    fn can_block_move_down() {
         let mut mc: MapController = MapController::new(4, 4, 1);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(0, 3, RED, 1);
-        /*     
+        mc.map.change_field(0, 2, RED, 1);
+        /*
             0|    1       |
             1| 3          |
-            2|            |
+            2|[x]          |
             3|[x] 2       |
                0  1  2  3
         */
 
-        let (can_move, collision_type) = mc.can_move_down(&test_schema, (1, 0)); // 1
+        let (can_move, collision_type) = mc.can_block_move_down(&test_schema, (1, 0)); // 1
         assert!(can_move);
         assert_eq!(collision_type, ColisionType::NoColision);
-        
-        let (can_move, collision_type) = mc.can_move_down(&test_schema, (1, 3)); // 2
+
+        let (can_move, collision_type) = mc.can_block_move_down(&test_schema, (1, 3)); // 2
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::BorderColision);
-        
-        let (can_move, collision_type) = mc.can_move_down(&test_schema, (0, 1)); // 3
+
+        let (can_move, collision_type) = mc.can_block_move_down(&test_schema, (0, 1)); // 3
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::SandColision);
     }
 
     #[test]
-    fn can_move_left() {
+    fn can_block_move_left() {
         let mut mc: MapController = MapController::new(3, 3, 1);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(0, 2, RED, 1);
-        /*     
+        /*
             0|    1    |
             1| 2       |
             2|[x] 3    |
                0  1  2
         */
 
-        let (can_move, collision_type) = mc.can_move_left(&test_schema, (1, 0)); // 1
+        let (can_move, collision_type) = mc.can_block_move_left(&test_schema, (1, 0)); // 1
         assert!(can_move);
         assert_eq!(collision_type, ColisionType::NoColision);
-        
-        let (can_move, collision_type) = mc.can_move_left(&test_schema, (0, 1)); // 2
+
+        let (can_move, collision_type) = mc.can_block_move_left(&test_schema, (0, 1)); // 2
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::BorderColision);
-        
-        let (can_move, collision_type) = mc.can_move_left(&test_schema, (1, 2)); // 3
+
+        let (can_move, collision_type) = mc.can_block_move_left(&test_schema, (1, 2)); // 3
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::SandColision);
     }
 
     #[test]
-    fn can_move_right() {
+    fn can_block_move_right() {
         let mut mc: MapController = MapController::new(3, 3, 1);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(1, 2, RED, 1);
-        /*     
+        /*
             0| 1     3 |
             1|         |
             2| 2 [x]   |
                0  1  2
         */
 
-        let (can_move, collision_type) = mc.can_move_right(&test_schema, (0, 0)); // 1
+        let (can_move, collision_type) = mc.can_block_move_right(&test_schema, (0, 0)); // 1
         assert!(can_move);
         assert_eq!(collision_type, ColisionType::NoColision);
-        
-        let (can_move, collision_type) = mc.can_move_right(&test_schema, (0, 2)); // 2
+
+        let (can_move, collision_type) = mc.can_block_move_right(&test_schema, (0, 2)); // 2
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::SandColision);
-        
-        let (can_move, collision_type) = mc.can_move_right(&test_schema, (2, 0)); // 3
+
+        let (can_move, collision_type) = mc.can_block_move_right(&test_schema, (2, 0)); // 3
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::BorderColision);
     }
 
     #[test]
-    fn can_rotate() {
+    fn can_block_rotate() {
         let mut mc: MapController = MapController::new(4, 4, 1);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (1, 0)]);
         mc.map.change_field(2, 3, RED, 1);
         mc.map.change_field(2, 2, RED, 1);
-        /*     
+        /*
             0|    1       |
             1|          3 |
             2|    2 [x]   |
@@ -407,27 +415,141 @@ mod test {
                0  1  2  3
         */
 
-        let (can_move, collision_type) = mc.can_rotate(&test_schema, (1, 0)); // 1
+        let (can_move, collision_type) = mc.can_block_rotate(&test_schema, (1, 0)); // 1
         assert!(can_move);
         assert_eq!(collision_type, ColisionType::NoColision);
-        
-        let (can_move, collision_type) = mc.can_rotate(&test_schema, (1, 2)); // 2
+
+        let (can_move, collision_type) = mc.can_block_rotate(&test_schema, (1, 2)); // 2
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::SandColision);
-        
-        let (can_move, collision_type) = mc.can_rotate(&test_schema, (3, 1)); // 3
+
+        let (can_move, collision_type) = mc.can_block_rotate(&test_schema, (3, 1)); // 3
         assert!(!can_move);
         assert_eq!(collision_type, ColisionType::BorderColision);
     }
 
-    // #[test]
-    // fn spawn_block() {
-    //     let mc: MapController = MapController::new(10, 10, 1);
-    //     let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0)]);
+    #[test]
+    fn is_block_coliding_with_any_border() {
+        let mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
-    //     mc.spawn_block(test_schema, WHITE);
+        assert!(mc.is_block_coliding_with_any_border(&test_schema, (0, -1)));
+        assert!(mc.is_block_coliding_with_any_border(&test_schema, (0, 4)));
+        assert!(mc.is_block_coliding_with_any_border(&test_schema, (-1, 0)));
+        assert!(mc.is_block_coliding_with_any_border(&test_schema, (4, 0)));
 
-    //     assert_eq!(mc.get_field(0, 0).unwrap().get_color(), WHITE);
-    //     assert_eq!(mc.get_field(1, 1).unwrap().get_color(), WHITE);
-    // }
+        assert!(!mc.is_block_coliding_with_any_border(&test_schema, (0, 0)));
+        assert!(!mc.is_block_coliding_with_any_border(&test_schema, (1, 2)));
+        assert!(!mc.is_block_coliding_with_any_border(&test_schema, (2, 2)));
+    }
+
+    #[test]
+    fn is_block_coliding_upper_border() {
+        let mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+
+        assert!(mc.is_block_coliding_upper_border(&test_schema, (0, -1)));
+        assert!(mc.is_block_coliding_upper_border(&test_schema, (3, -1)));
+
+        assert!(!mc.is_block_coliding_upper_border(&test_schema, (0, 0)));
+        assert!(!mc.is_block_coliding_upper_border(&test_schema, (3, 0)));
+    }
+
+    #[test]
+    fn is_block_coliding_right_border() {
+        let mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+
+        assert!(mc.is_block_coliding_right_border(&test_schema, (3, 0)));
+        assert!(mc.is_block_coliding_right_border(&test_schema, (3, 3)));
+
+        assert!(!mc.is_block_coliding_right_border(&test_schema, (2, 0)));
+        assert!(!mc.is_block_coliding_right_border(&test_schema, (2, 3)));
+    }
+
+    #[test]
+    fn is_block_coliding_bottom_border() {
+        let mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+
+        assert!(mc.is_block_coliding_bottom_border(&test_schema, (0, 3)));
+        assert!(mc.is_block_coliding_bottom_border(&test_schema, (3, 3)));
+
+        assert!(!mc.is_block_coliding_bottom_border(&test_schema, (0, 2)));
+        assert!(!mc.is_block_coliding_bottom_border(&test_schema, (3, 2)));
+    }
+
+    #[test]
+    fn is_block_coliding_left_border() {
+        let mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+
+        assert!(mc.is_block_coliding_left_border(&test_schema, (-1, 0)));
+        assert!(mc.is_block_coliding_left_border(&test_schema, (-1, 3)));
+
+        assert!(!mc.is_block_coliding_left_border(&test_schema, (0, 0)));
+        assert!(!mc.is_block_coliding_left_border(&test_schema, (0, 3)));
+    }
+
+    #[test]
+    fn is_block_coliding_with_sand() {
+        let mut mc: MapController = MapController::new(4, 4, 1);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
+        mc.map.change_field(2, 3, RED, 1);
+        mc.map.change_field(2, 2, RED, 1);
+        /*
+            0|            |
+            1|       1    |
+            2|    2 [3]   |
+            3|      [4]   |
+               0  1  2  3
+        */
+
+        assert!(!mc.is_block_coliding_with_sand(&test_schema, (2, 1)));
+        assert!(!mc.is_block_coliding_with_sand(&test_schema, (1, 2)));
+        assert!(mc.is_block_coliding_with_sand(&test_schema, (2, 2)));
+        assert!(mc.is_block_coliding_with_sand(&test_schema, (2, 3)));
+    }
+
+    #[test]
+    fn spawn_block() {
+        let mut mc: MapController = MapController::new(10, 10, 2);
+        let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0), (0, 1)]);
+
+        mc.spawn_block(test_schema, WHITE);
+
+        assert_eq!(mc.current_group_id, 2);
+        assert_eq!(mc.map.get_field(0, 0).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(0, 1).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(1, 0).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(1, 1).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(1, 2).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(2, 2).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(1, 3).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(2, 3).unwrap().get_color(), WHITE);
+    }
+
+    #[test]
+    fn get_fields_from_schema() {
+        let mc: MapController = MapController::new(10, 10, 2);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (0, 1)]);
+
+        let fields = mc.get_fields_from_schema(&test_schema, (0, 0));
+
+        println!("{:?}", fields);
+
+        assert_eq!(fields.len(), 8);
+        for expected_field in [
+            (0, 0),
+            (0, 1),
+            (1, 0),
+            (1, 1),
+            (0, 2),
+            (0, 3),
+            (1, 2),
+            (1, 3),
+        ] {
+            assert!(fields.contains(&expected_field));
+        }
+    }
 }

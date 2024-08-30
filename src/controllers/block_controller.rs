@@ -91,7 +91,7 @@ impl BlockController {
     }
 
     fn move_down(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
-        let (can_move, colision) = mc.can_move_down(
+        let (can_move, colision) = mc.can_block_move_down(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -111,7 +111,7 @@ impl BlockController {
     }
 
     fn move_right(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
-        let (can_move, colision) = mc.can_move_right(
+        let (can_move, colision) = mc.can_block_move_right(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -131,7 +131,7 @@ impl BlockController {
     }
 
     fn move_left(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
-        let (can_move, colision) = mc.can_move_left(
+        let (can_move, colision) = mc.can_block_move_left(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -151,7 +151,7 @@ impl BlockController {
     }
 
     fn rotate_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
-        let (can_move, colision) = mc.can_rotate(
+        let (can_move, colision) = mc.can_block_rotate(
             &self.get_current_block_rotated_clockwise().get_schema(),
             self.block_center_pos,
         );
@@ -171,7 +171,7 @@ impl BlockController {
     }
 
     fn rotate_counter_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
-        let (can_move, colision) = mc.can_rotate(
+        let (can_move, colision) = mc.can_block_rotate(
             &self.get_current_block_rotated_c_clockwise().get_schema(),
             self.block_center_pos,
         );
