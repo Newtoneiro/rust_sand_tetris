@@ -219,4 +219,23 @@ mod test {
             )
         );
     }
+
+    #[test]
+    fn normalize_color() {
+        for r_color in RED_VAR {
+            assert_eq!(GraphicController::normalize_color(r_color), RED);
+        }
+        for b_color in BLUE_VAR {
+            assert_eq!(GraphicController::normalize_color(b_color), BLUE);
+        }
+        for g_color in GREEN_VAR {
+            assert_eq!(GraphicController::normalize_color(g_color), GREEN);
+        }
+        for y_color in YELLOW_VAR {
+            assert_eq!(GraphicController::normalize_color(y_color), YELLOW);
+        }
+        for other_color in [WHITE, BACKGROUND_COLOR] {
+            assert_eq!(GraphicController::normalize_color(other_color), BACKGROUND_COLOR);
+        }
+    }
 }
