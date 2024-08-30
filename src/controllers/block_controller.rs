@@ -7,8 +7,8 @@ use crate::{
         block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS, PREVIEW_BLOCK_CHUNK_SIDE},
         colors::{BLUE, GREEN, RED, YELLOW},
     },
-    objects::block::{Block, BlockType},
     controllers::map_controller::{ColisionType, MapController},
+    objects::block::{Block, BlockType},
 };
 
 pub struct BlockController {
@@ -64,7 +64,11 @@ impl BlockController {
         }
     }
 
-    fn check_game_over_and_settle_if(&mut self, mc: &mut MapController, settle_condition: bool) -> bool {
+    fn check_game_over_and_settle_if(
+        &mut self,
+        mc: &mut MapController,
+        settle_condition: bool,
+    ) -> bool {
         let game_over: bool = mc.is_game_over(
             &self.get_current_block().get_schema(),
             self.block_center_pos,

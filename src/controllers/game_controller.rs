@@ -2,15 +2,18 @@ use macroquad::{color::Color, input::KeyCode};
 
 use crate::{
     constants::{
-        animation_constants::DEMOLISHION_CHUNK_SIZE, block_constants::BLOCK_CHUNK_SIDE, colors::{BLACK, WHITE}, interface_constants::{
+        animation_constants::DEMOLISHION_CHUNK_SIZE,
+        block_constants::BLOCK_CHUNK_SIDE,
+        colors::{BLACK, WHITE},
+        interface_constants::{
             GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
             GAME_OVER_OUTLINE_WIDTH, GAME_OVER_TEXT, H_BORDER_OFFSET, SCORE_FONT_SIZE,
             SCORE_OUTLINE_WIDTH, SCORE_TEXT, V_BORDER_OFFSET,
-        }, map_constants::{MAP_HEIGHT, MAP_WIDTH}
+        },
+        map_constants::{MAP_HEIGHT, MAP_WIDTH},
     },
     controllers::{
-        block_controller::BlockController,
-        graphic_controller::GraphicController,
+        block_controller::BlockController, graphic_controller::GraphicController,
         map_controller::MapController,
     },
 };
@@ -25,7 +28,8 @@ pub struct GameController {
 impl GameController {
     pub fn new() -> GameController {
         let block_controller: BlockController = BlockController::new();
-        let map_controller: MapController = MapController::new(MAP_WIDTH, MAP_HEIGHT, BLOCK_CHUNK_SIDE);
+        let map_controller: MapController =
+            MapController::new(MAP_WIDTH, MAP_HEIGHT, BLOCK_CHUNK_SIDE);
 
         GameController {
             score: 0,
@@ -177,10 +181,18 @@ impl GameController {
             return ();
         }
         let is_game_over = match key {
-            KeyCode::D => self.block_controller.handle_move_right(&mut self.map_controller),
-            KeyCode::A => self.block_controller.handle_move_left(&mut self.map_controller),
-            KeyCode::S => self.block_controller.handle_move_down(&mut self.map_controller),
-            KeyCode::E => self.block_controller.handle_rotate_clockwise(&mut self.map_controller),
+            KeyCode::D => self
+                .block_controller
+                .handle_move_right(&mut self.map_controller),
+            KeyCode::A => self
+                .block_controller
+                .handle_move_left(&mut self.map_controller),
+            KeyCode::S => self
+                .block_controller
+                .handle_move_down(&mut self.map_controller),
+            KeyCode::E => self
+                .block_controller
+                .handle_rotate_clockwise(&mut self.map_controller),
             KeyCode::Q => self
                 .block_controller
                 .handle_rotate_counter_clockwise(&mut self.map_controller),

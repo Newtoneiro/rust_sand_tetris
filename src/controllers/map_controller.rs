@@ -1,9 +1,10 @@
-use macroquad::color::Color;
 use ::rand::thread_rng;
+use macroquad::color::Color;
 use rand::seq::SliceRandom;
 
 use crate::{
-    controllers::graphic_controller::GraphicController, objects::{field::Field, map::Map}
+    controllers::graphic_controller::GraphicController,
+    objects::{field::Field, map::Map},
 };
 
 pub struct MapController {
@@ -48,7 +49,7 @@ impl MapController {
     }
 
     pub fn get_fields_to_draw(&self) -> Vec<&Field> {
-        self.map.get_fields_to_draw()
+        self.map.filter_fields(|field: &Field| field.do_draw())
     }
 
     pub fn get_shuffled_fields(&self, fields_coords: &Vec<(i32, i32)>) -> Vec<&Field> {
@@ -228,9 +229,33 @@ impl MapController {
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::WHITE;
+    use crate::constants::colors::RED;
 
     use super::*;
+
+    #[test]
+    fn get_fields_to_draw() {
+        let mut mc: MapController = MapController::new(200, 400, 10);
+        mc.map.change_field(40, 20, RED, 0);
+        mc.map.change_field(30, 15, RED, 0);
+        mc.map.change_field(100, 0, RED, 0);
+
+        let fields_to_draw: Vec<&Field> = mc.get_fields_to_draw();
+
+        assert_eq!(fields_to_draw.len(), 3);
+        assert!(fields_to_draw.contains(&&Field::new(40, 20, RED, 0)));
+        assert!(fields_to_draw.contains(&&Field::new(30, 15, RED, 0)));
+        assert!(fields_to_draw.contains(&&Field::new(100, 0, RED, 0)));
+    }
+
+    #[test]
+    fn get_fields_to_draw_empty() {
+        let mc: MapController = MapController::new(200, 400, 10);
+
+        let fields_to_draw: Vec<&Field> = mc.get_fields_to_draw();
+
+        assert_eq!(fields_to_draw.len(), 0);
+    }
 
     // #[test]
     // fn is_game_over() {
