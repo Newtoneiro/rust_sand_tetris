@@ -8,7 +8,7 @@ use crate::{
         colors::{BLUE, GREEN, RED, YELLOW},
     },
     objects::block::{Block, BlockType},
-    objects::map::{ColisionType, Map},
+    controllers::map_controller::{ColisionType, MapController},
 };
 
 pub struct BlockController {
@@ -64,8 +64,8 @@ impl BlockController {
         }
     }
 
-    fn check_game_over_and_settle_if(&mut self, map: &mut Map, settle_condition: bool) -> bool {
-        let game_over: bool = map.is_game_over(
+    fn check_game_over_and_settle_if(&mut self, mc: &mut MapController, settle_condition: bool) -> bool {
+        let game_over: bool = mc.is_game_over(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -73,21 +73,21 @@ impl BlockController {
             return true;
         }
         if settle_condition {
-            self.settle_block(map);
+            self.settle_block(mc);
         }
         false
     }
 
-    pub fn handle_move_down(&mut self, map: &mut Map) -> bool {
-        let (can_move, _) = self.move_down(map);
+    pub fn handle_move_down(&mut self, mc: &mut MapController) -> bool {
+        let (can_move, _) = self.move_down(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(map, true);
+            return self.check_game_over_and_settle_if(mc, true);
         }
         false
     }
 
-    fn move_down(&mut self, map: &mut Map) -> (bool, ColisionType) {
-        let (can_move, colision) = map.can_move_down(
+    fn move_down(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
+        let (can_move, colision) = mc.can_move_down(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -98,16 +98,16 @@ impl BlockController {
         (can_move, colision)
     }
 
-    pub fn handle_move_right(&mut self, map: &mut Map) -> bool {
-        let (can_move, colision) = self.move_right(map);
+    pub fn handle_move_right(&mut self, mc: &mut MapController) -> bool {
+        let (can_move, colision) = self.move_right(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(map, colision == ColisionType::SandColision);
+            return self.check_game_over_and_settle_if(mc, colision == ColisionType::SandColision);
         }
         false
     }
 
-    fn move_right(&mut self, map: &mut Map) -> (bool, ColisionType) {
-        let (can_move, colision) = map.can_move_right(
+    fn move_right(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
+        let (can_move, colision) = mc.can_move_right(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -118,16 +118,16 @@ impl BlockController {
         (can_move, colision)
     }
 
-    pub fn handle_move_left(&mut self, map: &mut Map) -> bool {
-        let (can_move, colision) = self.move_left(map);
+    pub fn handle_move_left(&mut self, mc: &mut MapController) -> bool {
+        let (can_move, colision) = self.move_left(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(map, colision == ColisionType::SandColision);
+            return self.check_game_over_and_settle_if(mc, colision == ColisionType::SandColision);
         }
         false
     }
 
-    fn move_left(&mut self, map: &mut Map) -> (bool, ColisionType) {
-        let (can_move, colision) = map.can_move_left(
+    fn move_left(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
+        let (can_move, colision) = mc.can_move_left(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
         );
@@ -138,16 +138,16 @@ impl BlockController {
         (can_move, colision)
     }
 
-    pub fn handle_rotate_clockwise(&mut self, map: &mut Map) -> bool {
-        let (can_move, colision) = self.rotate_clockwise(map);
+    pub fn handle_rotate_clockwise(&mut self, mc: &mut MapController) -> bool {
+        let (can_move, colision) = self.rotate_clockwise(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(map, colision == ColisionType::SandColision);
+            return self.check_game_over_and_settle_if(mc, colision == ColisionType::SandColision);
         }
         false
     }
 
-    fn rotate_clockwise(&mut self, map: &Map) -> (bool, ColisionType) {
-        let (can_move, colision) = map.can_rotate(
+    fn rotate_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
+        let (can_move, colision) = mc.can_rotate(
             &self.get_current_block_rotated_clockwise().get_schema(),
             self.block_center_pos,
         );
@@ -158,16 +158,16 @@ impl BlockController {
         (can_move, colision)
     }
 
-    pub fn handle_rotate_counter_clockwise(&mut self, map: &mut Map) -> bool {
-        let (can_move, colision) = self.rotate_counter_clockwise(map);
+    pub fn handle_rotate_counter_clockwise(&mut self, mc: &mut MapController) -> bool {
+        let (can_move, colision) = self.rotate_counter_clockwise(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(map, colision == ColisionType::SandColision);
+            return self.check_game_over_and_settle_if(mc, colision == ColisionType::SandColision);
         }
         false
     }
 
-    fn rotate_counter_clockwise(&mut self, map: &Map) -> (bool, ColisionType) {
-        let (can_move, colision) = map.can_rotate(
+    fn rotate_counter_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
+        let (can_move, colision) = mc.can_rotate(
             &self.get_current_block_rotated_c_clockwise().get_schema(),
             self.block_center_pos,
         );
@@ -238,13 +238,13 @@ impl BlockController {
         (output, color)
     }
 
-    pub fn tick_and_check_game_over(&mut self, map: &mut Map) -> bool {
-        self.handle_move_down(map)
+    pub fn tick_and_check_game_over(&mut self, mc: &mut MapController) -> bool {
+        self.handle_move_down(mc)
     }
 
-    pub fn settle_block(&mut self, map: &mut Map) {
+    pub fn settle_block(&mut self, mc: &mut MapController) {
         let drawing_schema_color: (Vec<(i32, i32)>, Color) = self.get_block_to_draw();
-        map.spawn_block(drawing_schema_color.0, drawing_schema_color.1);
+        mc.spawn_block(drawing_schema_color.0, drawing_schema_color.1);
         self.get_new_block();
     }
 
@@ -303,11 +303,11 @@ mod test {
     #[test]
     fn block_controller_move_down() {
         let mut bc: BlockController = BlockController::new();
-        let mut map: Map = Map::new(200, 400);
+        let mut mc: MapController = MapController::new(200, 400, 10);
         let starting_pos = BLOCK_STARTING_POS;
 
         bc.init_block_queue();
-        bc.move_down(&mut map);
+        bc.move_down(&mut mc);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0, starting_pos.1 + 1));
     }
@@ -315,11 +315,11 @@ mod test {
     #[test]
     fn block_controller_move_right() {
         let mut bc: BlockController = BlockController::new();
-        let mut map: Map = Map::new(200, 400);
+        let mut mc: MapController = MapController::new(200, 400, 10);
         let starting_pos = BLOCK_STARTING_POS;
 
         bc.init_block_queue();
-        bc.move_right(&mut map);
+        bc.move_right(&mut mc);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 + 1, starting_pos.1));
     }
@@ -327,11 +327,11 @@ mod test {
     #[test]
     fn block_controller_move_left() {
         let mut bc: BlockController = BlockController::new();
-        let mut map: Map = Map::new(200, 400);
+        let mut mc: MapController = MapController::new(200, 400, 10);
         let starting_pos = BLOCK_STARTING_POS;
 
         bc.init_block_queue();
-        bc.move_left(&mut map);
+        bc.move_left(&mut mc);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 - 1, starting_pos.1));
     }

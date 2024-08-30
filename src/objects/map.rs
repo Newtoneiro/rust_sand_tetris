@@ -3,7 +3,7 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::collections::VecDeque;
 
 use crate::{
-    constants::{block_constants::BLOCK_CHUNK_SIDE, colors::BACKGROUND_COLOR},
+    constants::colors::BACKGROUND_COLOR,
     controllers::graphic_controller::GraphicController,
     objects::field::Field,
 };
@@ -12,14 +12,6 @@ pub struct Map {
     width: i32,
     height: i32,
     grid: Vec<Vec<Field>>,
-    current_group_id: u32,
-}
-
-#[derive(PartialEq, Debug)]
-pub enum ColisionType {
-    BorderColision,
-    SandColision,
-    NoColision,
 }
 
 impl Map {
@@ -30,8 +22,15 @@ impl Map {
             width,
             height,
             grid,
-            current_group_id: 1,
         }
+    }
+
+    pub fn get_width(&self) -> i32 {
+        self.width
+    }
+
+    pub fn get_height(&self) -> i32 {
+        self.height
     }
 
     fn create_grid(width: i32, height: i32) -> Vec<Vec<Field>> {
@@ -200,14 +199,14 @@ impl Map {
                 == GraphicController::normalize_color(neighbour_field.get_color())
     }
 
-    fn get_fields_for_demolishion(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
+    pub fn get_fields_for_demolishion(&mut self, group_ids: &Vec<u32>) -> Vec<(i32, i32)> {
         if self.is_row_complete(group_ids) {
             return self.get_fields_for_groups(group_ids);
         }
         Vec::new()
     }
 
-    fn is_row_complete(&self, group_ids: &Vec<u32>) -> bool {
+    pub fn is_row_complete(&self, group_ids: &Vec<u32>) -> bool {
         let mut touches_left_wall = false;
         let mut touches_right_wall = false;
 
@@ -335,184 +334,14 @@ impl Map {
         }
     }
 
-    pub fn can_move_down(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> (bool, ColisionType) {
-        if self.is_block_coliding_bottom_border(schema, (center_pos.0, center_pos.1 + 1)) {
-            return (false, ColisionType::BorderColision);
-        } else if self.is_block_coliding_with_sand(schema, (center_pos.0, center_pos.1 + 1)) {
-            return (false, ColisionType::SandColision);
-        }
-
-        (true, ColisionType::NoColision)
-    }
-
-    pub fn can_move_left(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> (bool, ColisionType) {
-        if self.is_block_coliding_left_border(schema, (center_pos.0 - 1, center_pos.1)) {
-            return (false, ColisionType::BorderColision);
-        } else if self.is_block_coliding_with_sand(schema, (center_pos.0 - 1, center_pos.1)) {
-            return (false, ColisionType::SandColision);
-        }
-
-        (true, ColisionType::NoColision)
-    }
-
-    pub fn can_move_right(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> (bool, ColisionType) {
-        if self.is_block_coliding_right_border(schema, (center_pos.0 + 1, center_pos.1)) {
-            return (false, ColisionType::BorderColision);
-        } else if self.is_block_coliding_with_sand(schema, (center_pos.0 + 1, center_pos.1)) {
-            return (false, ColisionType::SandColision);
-        }
-
-        (true, ColisionType::NoColision)
-    }
-
-    pub fn can_rotate(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> (bool, ColisionType) {
-        if self.is_block_coliding_with_any_border(schema, center_pos) {
-            return (false, ColisionType::BorderColision);
-        } else if self.is_block_coliding_with_sand(schema, center_pos) {
-            return (false, ColisionType::SandColision);
-        }
-
-        (true, ColisionType::NoColision)
-    }
-
-    fn is_block_coliding_with_any_border(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> bool {
-        self.is_block_coliding_bottom_border(schema, center_pos)
-            || self.is_block_coliding_left_border(schema, center_pos)
-            || self.is_block_coliding_right_border(schema, center_pos)
-    }
-
-    fn is_block_coliding_upper_border(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> bool {
-        let upper_most_box: (i8, i8) = *schema
-            .into_iter()
-            .min_by_key(|schema_box| schema_box.1)
-            .unwrap();
-        let upper_border = center_pos.1 + (upper_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
-
-        upper_border < 0
-    }
-
-    fn is_block_coliding_bottom_border(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> bool {
-        let bottom_most_box: (i8, i8) = *schema
-            .into_iter()
-            .max_by_key(|schema_box| schema_box.1)
-            .unwrap();
-        let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * BLOCK_CHUNK_SIDE;
-
-        bottom_border > self.height
-    }
-
-    fn is_block_coliding_left_border(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> bool {
-        let bottom_most_box: (i8, i8) = *schema
-            .into_iter()
-            .min_by_key(|schema_box| schema_box.0)
-            .unwrap();
-
-        let left_border = center_pos.0 + bottom_most_box.0 as i32 * BLOCK_CHUNK_SIDE;
-
-        left_border < 0
-    }
-
-    fn is_block_coliding_right_border(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> bool {
-        let right_most_box: (i8, i8) = *schema
-            .into_iter()
-            .max_by_key(|schema_box| schema_box.0)
-            .unwrap();
-
-        let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * BLOCK_CHUNK_SIDE;
-
-        right_border > self.width
-    }
-
-    fn is_block_coliding_with_sand(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
-        for (x, y) in self.get_fields_from_schema(schema, center_pos) {
-            let result: bool = match self.get_field(x, y) {
-                Some(field) => !field.is_empty(),
-                None => false,
-            };
-            if result {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    pub fn spawn_block(&mut self, schema: Vec<(i32, i32)>, color: Color) {
-        for (x, y, color) in GraphicController::get_skin_for_schema(schema, color) {
-            self.change_field(x, y, color, self.current_group_id);
-        }
-        self.current_group_id += 1;
-    }
-
-    fn get_fields_from_schema(
-        &self,
-        schema: &Vec<(i8, i8)>,
-        center_pos: (i32, i32),
-    ) -> Vec<(i32, i32)> {
-        let mut output = Vec::new();
-
-        for block_box in schema {
-            let x: i32 = center_pos.0 + block_box.0 as i32 * BLOCK_CHUNK_SIDE;
-            let y: i32 = center_pos.1 + block_box.1 as i32 * BLOCK_CHUNK_SIDE;
-            for x_offset in 0..=BLOCK_CHUNK_SIDE {
-                for y_offset in 0..=BLOCK_CHUNK_SIDE {
-                    output.push((x + x_offset, y + y_offset));
-                }
-            }
-        }
-
-        output
-    }
-
-    pub fn is_game_over(&self, schema: &Vec<(i8, i8)>, center_pos: (i32, i32)) -> bool {
-        self.is_block_coliding_upper_border(schema, center_pos)
-    }
-
     pub fn clear(&mut self) {
         self.grid = Map::create_grid(self.width, self.height);
-        self.current_group_id = 1;
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::{BLUE, RED, WHITE, YELLOW, YELLOW_DARK};
+    use crate::constants::colors::{BLUE, RED, YELLOW, YELLOW_DARK};
 
     use super::*;
 
@@ -521,11 +350,10 @@ mod test {
         let map = Map::new(200, 400);
         let map: Map = map;
 
-        assert_eq!(map.width, 200);
-        assert_eq!(map.height, 400);
+        assert_eq!(map.get_width(), 200);
+        assert_eq!(map.get_height(), 400);
         assert_eq!(map.grid.len(), 400);
         assert_eq!(map.grid.get(0).unwrap().len(), 200);
-        assert_eq!(map.current_group_id, 1);
     }
 
     #[test]
@@ -1128,36 +956,13 @@ mod test {
     }
 
     #[test]
-    fn is_game_over() {
-        let map: Map = Map::new(10, 10);
-        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
-
-        assert!(!map.is_game_over(&test_schema, (0, 0)));
-        assert!(!map.is_game_over(&test_schema, (0, BLOCK_CHUNK_SIDE)));
-        assert!(map.is_game_over(&test_schema, (0, -2 * BLOCK_CHUNK_SIDE)));
-    }
-
-    #[test]
-    fn spawn_block() {
-        let mut map: Map = Map::new(10, 10);
-        let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0), (1, 1)]);
-
-        map.spawn_block(test_schema, WHITE);
-
-        assert_eq!(map.get_field(0, 0).unwrap().get_color(), WHITE);
-        assert_eq!(map.get_field(1, 1).unwrap().get_color(), WHITE);
-    }
-
-    #[test]
     fn clear() {
         let mut map: Map = Map::new(10, 10);
 
         map.change_field(0, 0, RED, 0);
-        map.current_group_id = 1;
 
         map.clear();
 
         assert_eq!(map.get_field(0, 0).unwrap().get_color(), BACKGROUND_COLOR);
-        assert_eq!(map.get_field(0, 0).unwrap().get_group_id(), 0);
     }
 }
