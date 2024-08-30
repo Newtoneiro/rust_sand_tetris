@@ -269,6 +269,9 @@ impl Map {
         let field_down_left = self.get_field(x - 1, y + 1);
         let field_down_right = self.get_field(x + 1, y + 1);
 
+        println!("{:?}", field_down_left);
+        println!("{:?}", field_down_right);
+
         match field_down {
             Some(field) if field.is_empty() => (x, y + 1), // No grain below
             Some(_) if field_down_left.is_some() && field_down_right.is_some() => {
@@ -816,6 +819,24 @@ mod test {
         assert_eq!(map.get_new_pos(1, 7), (1, 8));
         map.tick_and_get_score_fields();
         assert_eq!(map.get_new_pos(1, 8), (1, 8));
+    }
+
+    #[test]
+    fn get_new_pos_both_sides_touch_wall() {
+        let mut map: Map = Map::new(1, 10);
+        map.change_field(0, 9, YELLOW, 1);
+        /*
+            7| . | --- Block drops here
+            8|   |
+            9|[x]|
+               0
+        */
+
+        map.change_field(0, 7, YELLOW, 2); // Track this block
+
+        assert_eq!(map.get_new_pos(0, 7), (0, 8));
+        map.tick_and_get_score_fields();
+        assert_eq!(map.get_new_pos(0, 8), (0, 8));
     }
 
     #[test]

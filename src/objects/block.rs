@@ -132,6 +132,66 @@ mod test {
     }
 
     #[test]
+    fn get_schema_invalid_value() {
+        let mut lb: Block = Block::new(BlockType::LBlock);
+
+        lb.rotation = 5;
+        let rotated_schema = lb.get_schema();
+
+        assert_eq!(rotated_schema.len(), 0);
+    }
+
+    #[test]
+    fn rotate_clockwise() {
+        let mut lb: Block = Block::new(BlockType::LBlock);
+
+        assert_eq!(lb.rotation, 0);
+
+        lb.rotate_clockwise();
+
+        assert_eq!(lb.rotation, 1);
+    }
+
+    #[test]
+    fn rotate_counter_clockwise() {
+        let mut lb: Block = Block::new(BlockType::LBlock);
+        lb.rotate_clockwise();
+
+        assert_eq!(lb.rotation, 1);
+
+        lb.rotate_counter_clockwise();
+
+        assert_eq!(lb.rotation, 0);
+    }
+
+    #[test]
+    fn cant_rotate_unrotable_block() {
+        let mut lb: Block = Block::new(BlockType::SquareBlock);
+        assert_eq!(lb.rotation, 0);
+
+        lb.rotate_clockwise();
+        assert_eq!(lb.rotation, 0);
+
+        lb.rotate_counter_clockwise();
+        assert_eq!(lb.rotation, 0);
+    }
+
+    #[test]
+    fn rotate_pass_12_o_clock() {
+        let mut lb: Block = Block::new(BlockType::LBlock);
+
+        assert_eq!(lb.rotation, 0);
+
+        lb.rotate_counter_clockwise();
+
+        assert_eq!(lb.rotation, 3);
+
+        lb.rotate_clockwise();
+
+        assert_eq!(lb.rotation, 0);
+    }
+
+    #[test]
     fn rotate_90_lblock() {
         let mut lb: Block = Block::new(BlockType::LBlock);
 

@@ -269,6 +269,30 @@ mod test {
     }
 
     #[test]
+    fn tick_and_get_score_fields() {
+        let mut mc: MapController = MapController::new(4, 4, 1);
+
+        mc.map.change_field(0, 3, RED, 1);
+        mc.map.change_field(1, 3, RED, 1);
+        mc.map.change_field(2, 2, RED, 1);
+        mc.map.change_field(3, 3, RED, 1);
+        /*
+            0|            |
+            1|            |
+            2|      [x]   |
+            3|[x][x]   [x]|
+               0  1  2  3
+        */
+
+        let score_fields = mc.tick_and_get_score_fields();
+
+        assert_eq!(score_fields.len(), 4);
+        for score_point in [(0, 3), (1, 3), (2, 3), (3, 3)] {
+            assert!(score_fields.contains(&score_point));
+        }
+    }
+
+    #[test]
     fn demolish_fields() {
         let mut mc: MapController = MapController::new(10, 10, 1);
 
@@ -333,7 +357,7 @@ mod test {
         /*
             0|    1       |
             1| 3          |
-            2|[x]          |
+            2|[x]         |
             3|[x] 2       |
                0  1  2  3
         */

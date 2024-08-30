@@ -198,6 +198,20 @@ mod test {
     use super::*;
 
     #[test]
+    fn draw_background() {
+        // let mut called_clear_background = false;
+
+        // macroquad::prelude::clear_background = |color| {
+        //     called_clear_background = true;
+        //     assert_eq!(color, BACKGROUND_COLOR);
+        // };
+
+        // GraphicController::draw_background();
+
+        // assert!(called_clear_background);
+    }
+
+    #[test]
     fn test_map_to_window_dimensions() {
         assert_eq!(
             GraphicController::map_to_window_dimensions(0, 0),

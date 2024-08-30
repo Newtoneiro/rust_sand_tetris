@@ -5,5 +5,5 @@ edition = "2021"
 
 [dependencies]
 bounded-vec-deque = "0.1.1"
-macroquad = "0.4.12"
+macroquad = "0.4.13"
 rand = "0.8.5"
