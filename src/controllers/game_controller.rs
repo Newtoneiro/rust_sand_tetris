@@ -203,3 +203,28 @@ impl GameController {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn create_game_controller() {
+        let gc = GameController::new();
+
+        assert_eq!(gc.is_game_over, false);
+        assert_eq!(gc.score, 0);
+    }
+
+    #[test]
+    fn clear() {
+        let mut gc = GameController::new();
+        gc.score = 100;
+        gc.is_game_over = true;
+
+        gc.reset_game();
+
+        assert_eq!(gc.score, 0);
+        assert_eq!(gc.is_game_over, false);
+    }
+}

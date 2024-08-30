@@ -235,7 +235,10 @@ mod test {
             assert_eq!(GraphicController::normalize_color(y_color), YELLOW);
         }
         for other_color in [WHITE, BACKGROUND_COLOR] {
-            assert_eq!(GraphicController::normalize_color(other_color), BACKGROUND_COLOR);
+            assert_eq!(
+                GraphicController::normalize_color(other_color),
+                BACKGROUND_COLOR
+            );
         }
     }
 }
