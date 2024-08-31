@@ -560,8 +560,6 @@ mod test {
 
         let fields = mc.get_fields_from_schema(&test_schema, (0, 0));
 
-        println!("{:?}", fields);
-
         assert_eq!(fields.len(), 8);
         for expected_field in [
             (0, 0),

@@ -269,9 +269,6 @@ impl Map {
         let field_down_left = self.get_field(x - 1, y + 1);
         let field_down_right = self.get_field(x + 1, y + 1);
 
-        println!("{:?}", field_down_left);
-        println!("{:?}", field_down_right);
-
         match field_down {
             Some(field) if field.is_empty() => (x, y + 1), // No grain below
             Some(_) if field_down_left.is_some() && field_down_right.is_some() => {
