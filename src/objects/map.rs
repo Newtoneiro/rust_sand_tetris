@@ -810,6 +810,56 @@ mod test {
     }
 
     #[test]
+    fn get_new_pos_drop_right_while_touch_left_border() {
+        let mut map: Map = Map::new(10, 10);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_go_right(false);
+
+        /*
+            7| . ---- Block drops here
+            8|   [x]
+            9|[x][x][x]
+               0  1  2
+        */
+
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(1, 8, YELLOW, 1);
+
+        map.change_field(0, 7, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(0, 7, &mut rng), (0, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(0, 8, &mut rng), (0, 8));
+    }
+
+    #[test]
+    fn get_new_pos_drop_left_while_touch_right_border() {
+        let mut map: Map = Map::new(10, 10);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_go_right(false);
+
+        /*
+            7        . |---- Block drops here
+            8    [x]   |
+            9 [x][x][x]|
+               7  8  9
+        */
+
+        map.change_field(7, 9, YELLOW, 1);
+        map.change_field(8, 9, YELLOW, 1);
+        map.change_field(9, 9, YELLOW, 1);
+        map.change_field(8, 8, YELLOW, 1);
+
+        map.change_field(9, 7, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(9, 7, &mut rng), (9, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(9, 8, &mut rng), (9, 8));
+    }
+
+    #[test]
     fn get_new_pos_stuck() {
         let mut map: Map = Map::new(10, 10);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();

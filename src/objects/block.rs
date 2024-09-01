@@ -7,7 +7,7 @@ pub struct Block {
     rotation: u8,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum BlockType {
     LBlock,
     RevLBlock,
