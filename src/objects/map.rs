@@ -1,10 +1,9 @@
 use macroquad::color::Color;
-use rand::{seq::SliceRandom, thread_rng, Rng};
 use std::collections::VecDeque;
 
 use crate::{
     constants::colors::BACKGROUND_COLOR, controllers::graphic_controller::GraphicController,
-    objects::field::Field,
+    objects::field::Field, utils::tetris_rng::TetrisRng,
 };
 
 pub struct Map {
@@ -86,10 +85,10 @@ impl Map {
         output
     }
 
-    pub fn tick_and_get_score_fields(&mut self) -> Vec<(i32, i32)> {
-        for (x, y) in self.get_fields_coords_bottom_up() {
+    pub fn tick_and_get_score_fields(&mut self, rng: &mut impl TetrisRng) -> Vec<(i32, i32)> {
+        for (x, y) in self.get_fields_coords_bottom_up(rng) {
             if !self.get_field(x, y).unwrap().is_empty() {
-                let (new_x, new_y) = self.get_new_pos(x, y);
+                let (new_x, new_y) = self.get_new_pos(x, y, rng);
                 if (new_x, new_y) != (x, y) {
                     let old_field_pos = self.get_field(x, y).unwrap();
                     let field_color = old_field_pos.get_color();
@@ -245,11 +244,11 @@ impl Map {
         output
     }
 
-    fn get_fields_coords_bottom_up(&self) -> Vec<(i32, i32)> {
+    fn get_fields_coords_bottom_up(&self, rng: &mut impl TetrisRng) -> Vec<(i32, i32)> {
         let mut output = Vec::new();
 
         for y in (0..self.get_height()).rev() {
-            for x in self.get_random_row_order() {
+            for x in rng.get_random_row_order(self.width) {
                 output.push((x, y));
             }
         }
@@ -257,14 +256,7 @@ impl Map {
         output
     }
 
-    fn get_random_row_order(&self) -> Vec<i32> {
-        let mut row_order: Vec<i32> = (0..self.width).collect();
-        row_order.shuffle(&mut thread_rng());
-
-        row_order
-    }
-
-    fn get_new_pos(&self, x: i32, y: i32) -> (i32, i32) {
+    fn get_new_pos(&self, x: i32, y: i32, rng: &mut impl TetrisRng) -> (i32, i32) {
         let field_down = self.get_field(x, y + 1);
         let field_down_left = self.get_field(x - 1, y + 1);
         let field_down_right = self.get_field(x + 1, y + 1);
@@ -285,7 +277,7 @@ impl Map {
                     && field_down_right.unwrap().is_empty()
                 {
                     // If both sides empty, choose random
-                    let go_right: bool = rand::thread_rng().gen_range(0..=1) == 0;
+                    let go_right: bool = rng.gen_do_go_right();
                     match go_right {
                         true => (x + 1, y + 1),
                         false => (x - 1, y + 1),
@@ -326,7 +318,10 @@ impl Map {
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::{BLUE, RED, YELLOW, YELLOW_DARK};
+    use crate::{
+        constants::colors::{BLUE, RED, YELLOW, YELLOW_DARK},
+        utils::tetris_rng::{MockTetrisRng, ThreadTetrisRng},
+    };
 
     use super::*;
 
@@ -702,8 +697,9 @@ mod test {
     #[test]
     fn get_fields_coords_bottom_up() {
         let map: Map = Map::new(10, 10);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
-        let fields = map.get_fields_coords_bottom_up();
+        let fields = map.get_fields_coords_bottom_up(&mut rng);
 
         assert_eq!(fields.len(), 10 * 10);
         for (i, row) in fields.chunks(10).enumerate() {
@@ -715,20 +711,9 @@ mod test {
     }
 
     #[test]
-    fn get_random_row_order() {
-        let map: Map = Map::new(10, 10);
-
-        let order = map.get_random_row_order();
-
-        assert_eq!(order.len(), 10);
-        for i in 0..10 {
-            assert!(order.contains(&i));
-        }
-    }
-
-    #[test]
     fn get_new_pos_to_right() {
         let mut map: Map = Map::new(10, 10);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         /*
             6| . ---- Block drops here
             7|
@@ -743,16 +728,17 @@ mod test {
 
         map.change_field(0, 6, YELLOW, 3); // Track this block
 
-        assert_eq!(map.get_new_pos(0, 6), (0, 7));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(0, 7), (1, 8));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(1, 8), (1, 8));
+        assert_eq!(map.get_new_pos(0, 6, &mut rng), (0, 7),);
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(0, 7, &mut rng), (1, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(1, 8, &mut rng), (1, 8));
     }
 
     #[test]
     fn get_new_pos_to_left() {
         let mut map: Map = Map::new(10, 10);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         /*
             6|       . ---- Block drops here
             7|         [x]
@@ -770,22 +756,26 @@ mod test {
 
         map.change_field(2, 6, YELLOW, 3); // Track this block
 
-        assert_eq!(map.get_new_pos(2, 6), (2, 7));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(2, 7), (1, 8));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(1, 8), (1, 8));
+        assert_eq!(map.get_new_pos(2, 6, &mut rng), (2, 7));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(2, 7, &mut rng), (1, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(1, 8, &mut rng), (1, 8));
     }
 
     #[test]
-    fn get_new_pos_random() {
+    fn get_new_pos_drop_right() {
         let mut map: Map = Map::new(10, 10);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_go_right(true);
+
         /*
             7|    . ---- Block drops here
             8|   [x]
             9|[x][x][x]
                0  1  2
         */
+
         map.change_field(0, 9, YELLOW, 1);
         map.change_field(1, 9, YELLOW, 1);
         map.change_field(2, 9, YELLOW, 1);
@@ -793,12 +783,36 @@ mod test {
 
         map.change_field(1, 7, YELLOW, 3); // Track this block
 
-        assert!([(0, 8), (2, 8)].contains(&map.get_new_pos(1, 7))); // Either drop to left or right
+        assert_eq!(map.get_new_pos(1, 7, &mut rng), (2, 8));
+    }
+
+    #[test]
+    fn get_new_pos_drop_left() {
+        let mut map: Map = Map::new(10, 10);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_go_right(false);
+
+        /*
+            7|    . ---- Block drops here
+            8|   [x]
+            9|[x][x][x]
+               0  1  2
+        */
+
+        map.change_field(0, 9, YELLOW, 1);
+        map.change_field(1, 9, YELLOW, 1);
+        map.change_field(2, 9, YELLOW, 1);
+        map.change_field(1, 8, YELLOW, 1);
+
+        map.change_field(1, 7, YELLOW, 3); // Track this block
+
+        assert_eq!(map.get_new_pos(1, 7, &mut rng), (0, 8));
     }
 
     #[test]
     fn get_new_pos_stuck() {
         let mut map: Map = Map::new(10, 10);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         /*
             7|    . ---- Block drops here
             8|[x]   [x]
@@ -813,14 +827,15 @@ mod test {
 
         map.change_field(1, 7, YELLOW, 3); // Track this block
 
-        assert_eq!(map.get_new_pos(1, 7), (1, 8));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(1, 8), (1, 8));
+        assert_eq!(map.get_new_pos(1, 7, &mut rng), (1, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(1, 8, &mut rng), (1, 8));
     }
 
     #[test]
     fn get_new_pos_both_sides_touch_wall() {
         let mut map: Map = Map::new(1, 10);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         map.change_field(0, 9, YELLOW, 1);
         /*
             7| . | --- Block drops here
@@ -831,17 +846,18 @@ mod test {
 
         map.change_field(0, 7, YELLOW, 2); // Track this block
 
-        assert_eq!(map.get_new_pos(0, 7), (0, 8));
-        map.tick_and_get_score_fields();
-        assert_eq!(map.get_new_pos(0, 8), (0, 8));
+        assert_eq!(map.get_new_pos(0, 7, &mut rng), (0, 8));
+        map.tick_and_get_score_fields(&mut rng);
+        assert_eq!(map.get_new_pos(0, 8, &mut rng), (0, 8));
     }
 
     #[test]
     fn grains_move_down() {
         let mut map: Map = Map::new(200, 400);
+
         map.change_field(40, 20, RED, 0);
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 1);
         assert_eq!(map.get_field(40, 20).unwrap().get_color(), BACKGROUND_COLOR);
@@ -857,7 +873,7 @@ mod test {
         map.change_field(5, 9, RED, 0); // Grain under
         map.change_field(5, 8, RED, 0); // Grain above
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 2);
         assert_eq!(map.get_field(5, 9).unwrap().get_color(), RED);
@@ -879,7 +895,7 @@ mod test {
         map.change_field(0, 9, RED, 0); // Grain under
         map.change_field(0, 8, RED, 0); // Grain above
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 2);
         assert_eq!(map.get_field(0, 9).unwrap().get_color(), RED);
@@ -895,7 +911,7 @@ mod test {
         map.change_field(0, 9, RED, 0); // left Grain above
         map.change_field(0, 8, RED, 0); // left Grain above
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 4);
         assert_eq!(map.get_field(1, 9).unwrap().get_color(), RED);
@@ -911,7 +927,7 @@ mod test {
         map.change_field(9, 9, RED, 0); // Grain under
         map.change_field(9, 8, RED, 0); // Grain above
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 2);
         assert_eq!(map.get_field(9, 9).unwrap().get_color(), RED);
@@ -927,7 +943,7 @@ mod test {
         map.change_field(9, 9, RED, 0); // right Grain above
         map.change_field(9, 8, RED, 0); // right Grain above
 
-        map.tick_and_get_score_fields();
+        map.tick_and_get_score_fields(&mut ThreadTetrisRng::new());
 
         assert_eq!(map.filter_fields(|field: &Field| field.do_draw()).len(), 4);
         assert_eq!(map.get_field(8, 9).unwrap().get_color(), RED);

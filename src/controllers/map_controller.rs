@@ -1,11 +1,10 @@
-use ::rand::thread_rng;
 use macroquad::color::Color;
-use rand::seq::SliceRandom;
 
 use crate::{
     constants::colors::BACKGROUND_COLOR,
     controllers::graphic_controller::GraphicController,
     objects::{field::Field, map::Map},
+    utils::tetris_rng::TetrisRng,
 };
 
 pub struct MapController {
@@ -41,8 +40,8 @@ impl MapController {
         self.map.clear();
     }
 
-    pub fn tick_and_get_score_fields(&mut self) -> Vec<(i32, i32)> {
-        self.map.tick_and_get_score_fields()
+    pub fn tick_and_get_score_fields(&mut self, rng: &mut impl TetrisRng) -> Vec<(i32, i32)> {
+        self.map.tick_and_get_score_fields(rng)
     }
 
     pub fn demolish_fields(&mut self, fields: &Vec<(i32, i32)>) {
@@ -55,12 +54,17 @@ impl MapController {
         self.map.filter_fields(|field: &Field| field.do_draw())
     }
 
-    pub fn get_shuffled_fields(&self, fields_coords: &Vec<(i32, i32)>) -> Vec<&Field> {
+    pub fn get_shuffled_fields(
+        &self,
+        fields_coords: &Vec<(i32, i32)>,
+        rng: &mut impl TetrisRng,
+    ) -> Vec<&Field> {
         let mut fields_to_demolish = Vec::new();
         for (x, y) in fields_coords {
             fields_to_demolish.push(self.map.get_field(*x, *y).unwrap());
         }
-        fields_to_demolish.shuffle(&mut thread_rng());
+        rng.shuffle_fields(&mut fields_to_demolish);
+
         fields_to_demolish
     }
 
@@ -231,7 +235,10 @@ impl MapController {
 
 #[cfg(test)]
 mod test {
-    use crate::constants::colors::{BACKGROUND_COLOR, RED, WHITE};
+    use crate::{
+        constants::colors::{BACKGROUND_COLOR, RED, WHITE},
+        utils::tetris_rng::ThreadTetrisRng,
+    };
 
     use super::*;
 
@@ -271,6 +278,7 @@ mod test {
     #[test]
     fn tick_and_get_score_fields() {
         let mut mc: MapController = MapController::new(4, 4, 1);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
         mc.map.change_field(0, 3, RED, 1);
         mc.map.change_field(1, 3, RED, 1);
@@ -284,7 +292,7 @@ mod test {
                0  1  2  3
         */
 
-        let score_fields = mc.tick_and_get_score_fields();
+        let score_fields = mc.tick_and_get_score_fields(&mut rng);
 
         assert_eq!(score_fields.len(), 4);
         for score_point in [(0, 3), (1, 3), (2, 3), (3, 3)] {
@@ -338,10 +346,11 @@ mod test {
     #[test]
     fn get_shuffled_fields() {
         let mc: MapController = MapController::new(10, 10, 1);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
         let fields_coords: Vec<(i32, i32)> = Vec::from([(0, 0), (5, 5), (9, 9)]);
 
-        let shuffled_fields = mc.get_shuffled_fields(&fields_coords);
+        let shuffled_fields = mc.get_shuffled_fields(&fields_coords, &mut rng);
         assert_eq!(shuffled_fields.len(), 3);
         for (x, y) in fields_coords {
             assert!(shuffled_fields.contains(&mc.map.get_field(x, y).unwrap()));

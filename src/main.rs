@@ -1,10 +1,12 @@
 mod constants;
 mod controllers;
 mod objects;
+mod utils;
 
 use constants::window_constants::{WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH};
 use controllers::game_controller::GameController;
 use macroquad::prelude::*;
+use utils::tetris_rng::ThreadTetrisRng;
 
 fn window_conf() -> Conf {
     Conf {
@@ -18,7 +20,8 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut gc: GameController = GameController::new();
+    let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+    let mut gc: GameController<ThreadTetrisRng> = GameController::new(&mut rng);
     gc.reset_game();
 
     loop {

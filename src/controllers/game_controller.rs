@@ -16,17 +16,25 @@ use crate::{
         block_controller::BlockController, graphic_controller::GraphicController,
         map_controller::MapController,
     },
+    utils::tetris_rng::TetrisRng,
 };
 
-pub struct GameController {
+pub struct GameController<'a, R>
+where
+    R: TetrisRng,
+{
     score: u32,
     is_game_over: bool,
     block_controller: BlockController,
     map_controller: MapController,
+    rng: &'a mut R,
 }
 
-impl GameController {
-    pub fn new() -> GameController {
+impl<'a, R> GameController<'a, R>
+where
+    R: TetrisRng,
+{
+    pub fn new(rng: &'a mut R) -> Self {
         let block_controller: BlockController = BlockController::new();
         let map_controller: MapController =
             MapController::new(MAP_WIDTH, MAP_HEIGHT, BLOCK_CHUNK_SIDE);
@@ -36,6 +44,7 @@ impl GameController {
             is_game_over: false,
             block_controller,
             map_controller,
+            rng,
         }
     }
 
@@ -43,7 +52,7 @@ impl GameController {
         self.score = 0;
         self.is_game_over = false;
         self.map_controller.clear();
-        self.block_controller.clear();
+        self.block_controller.clear(self.rng);
     }
 
     pub async fn tick(&mut self) {
@@ -68,7 +77,7 @@ impl GameController {
     }
 
     async fn tick_map_and_update_score(&mut self) {
-        let score_fields: Vec<(i32, i32)> = self.map_controller.tick_and_get_score_fields();
+        let score_fields: Vec<(i32, i32)> = self.map_controller.tick_and_get_score_fields(self.rng);
         if score_fields.len() > 0 {
             self.draw_row_demolishion(&score_fields).await;
             self.map_controller.demolish_fields(&score_fields);
@@ -79,7 +88,7 @@ impl GameController {
     async fn tick_block_and_check_game_over(&mut self) {
         let is_game_over = self
             .block_controller
-            .tick_and_check_game_over(&mut self.map_controller);
+            .tick_and_check_game_over(&mut self.map_controller, self.rng);
         if is_game_over {
             self.handle_game_over();
         }
@@ -162,8 +171,10 @@ impl GameController {
         );
     }
 
-    async fn draw_row_demolishion(&self, fields_coords: &Vec<(i32, i32)>) {
-        let fields_to_demolish = self.map_controller.get_shuffled_fields(fields_coords);
+    async fn draw_row_demolishion(&mut self, fields_coords: &Vec<(i32, i32)>) {
+        let fields_to_demolish = self
+            .map_controller
+            .get_shuffled_fields(fields_coords, self.rng);
         let mut demolishion_stash = Vec::new();
 
         for fields in fields_to_demolish.chunks(DEMOLISHION_CHUNK_SIZE) {
@@ -183,19 +194,19 @@ impl GameController {
         let is_game_over = match key {
             KeyCode::D => self
                 .block_controller
-                .handle_move_right(&mut self.map_controller),
+                .handle_move_right(&mut self.map_controller, self.rng),
             KeyCode::A => self
                 .block_controller
-                .handle_move_left(&mut self.map_controller),
+                .handle_move_left(&mut self.map_controller, self.rng),
             KeyCode::S => self
                 .block_controller
-                .handle_move_down(&mut self.map_controller),
+                .handle_move_down(&mut self.map_controller, self.rng),
             KeyCode::E => self
                 .block_controller
-                .handle_rotate_clockwise(&mut self.map_controller),
+                .handle_rotate_clockwise(&mut self.map_controller, self.rng),
             KeyCode::Q => self
                 .block_controller
-                .handle_rotate_counter_clockwise(&mut self.map_controller),
+                .handle_rotate_counter_clockwise(&mut self.map_controller, self.rng),
             _ => false,
         };
         if is_game_over {
@@ -206,11 +217,14 @@ impl GameController {
 
 #[cfg(test)]
 mod test {
+    use crate::utils::tetris_rng::ThreadTetrisRng;
+
     use super::*;
 
     #[test]
     fn create_game_controller() {
-        let gc = GameController::new();
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+        let gc = GameController::new(&mut rng);
 
         assert_eq!(gc.is_game_over, false);
         assert_eq!(gc.score, 0);
@@ -218,7 +232,8 @@ mod test {
 
     #[test]
     fn clear() {
-        let mut gc = GameController::new();
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+        let mut gc = GameController::new(&mut rng);
         gc.score = 100;
         gc.is_game_over = true;
 
