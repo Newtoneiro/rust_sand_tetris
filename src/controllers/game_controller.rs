@@ -35,7 +35,7 @@ where
     R: TetrisRng,
 {
     pub fn new(rng: &'a mut R) -> Self {
-        let block_controller: BlockController = BlockController::new();
+        let block_controller: BlockController = BlockController::new(BLOCK_CHUNK_SIDE);
         let map_controller: MapController =
             MapController::new(MAP_WIDTH, MAP_HEIGHT, BLOCK_CHUNK_SIDE);
 

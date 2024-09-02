@@ -73,8 +73,8 @@ pub struct MockTetrisRng {
     block_color: Color,
 }
 
+#[warn(dead_code)]
 impl MockTetrisRng {
-    #[warn(dead_code)]
     pub fn new() -> MockTetrisRng {
         MockTetrisRng {
             go_right: false,
@@ -84,22 +84,18 @@ impl MockTetrisRng {
         }
     }
 
-    #[warn(dead_code)]
     pub fn set_go_right(&mut self, go_right: bool) {
         self.go_right = go_right
     }
 
-    #[warn(dead_code)]
     pub fn set_random_row_order(&mut self, row_order: Vec<i32>) {
         self.row_order = row_order
     }
 
-    #[warn(dead_code)]
     pub fn set_block_type(&mut self, block_type: BlockType) {
         self.block_type = block_type
     }
 
-    #[warn(dead_code)]
     pub fn set_block_color(&mut self, block_color: Color) {
         self.block_color = block_color
     }

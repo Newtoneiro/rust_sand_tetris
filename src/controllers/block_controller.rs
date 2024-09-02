@@ -2,7 +2,7 @@ use bounded_vec_deque::BoundedVecDeque;
 use macroquad::color::Color;
 
 use crate::{
-    constants::block_constants::{BLOCK_CHUNK_SIDE, BLOCK_STARTING_POS, PREVIEW_BLOCK_CHUNK_SIDE},
+    constants::block_constants::{BLOCK_STARTING_POS, PREVIEW_BLOCK_CHUNK_SIDE},
     controllers::map_controller::{ColisionType, MapController},
     objects::block::Block,
     utils::tetris_rng::TetrisRng,
@@ -12,14 +12,16 @@ pub struct BlockController {
     block_center_pos: (i32, i32),
     block_queue: BoundedVecDeque<Block>,
     color_queue: BoundedVecDeque<Color>,
+    block_chunk_side: i32,
 }
 
 impl BlockController {
-    pub fn new() -> Self {
+    pub fn new(block_chunk_side: i32) -> Self {
         BlockController {
             block_center_pos: BLOCK_STARTING_POS,
             block_queue: BoundedVecDeque::new(2),
             color_queue: BoundedVecDeque::new(2),
+            block_chunk_side,
         }
     }
 
@@ -51,30 +53,34 @@ impl BlockController {
         color
     }
 
-    fn check_game_over_and_settle_if(
+    fn check_game_over(
         &mut self,
         mc: &mut MapController,
-        settle_condition: bool,
-        rng: &mut impl TetrisRng,
     ) -> bool {
-        let game_over: bool = mc.is_game_over(
+        mc.is_game_over(
             &self.get_current_block().get_schema(),
             self.block_center_pos,
-        );
-        if game_over {
-            return true;
-        }
-        if settle_condition {
-            self.settle_block(mc);
-            self.get_new_block(rng)
-        }
-        false
+        )
+    }
+
+    fn settle_and_get_new_block(
+        &mut self,
+        mc: &mut MapController,
+        rng: &mut impl TetrisRng,
+    ) {
+        self.settle_block(mc);
+        self.get_new_block(rng)
     }
 
     pub fn handle_move_down(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
         let (can_move, _) = self.move_down(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(mc, true, rng);
+            match self.check_game_over(mc) {
+                true => return true,
+                false => {
+                    self.settle_and_get_new_block(mc, rng)
+                },
+            }
         }
         false
     }
@@ -94,11 +100,14 @@ impl BlockController {
     pub fn handle_move_right(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
         let (can_move, colision) = self.move_right(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(
-                mc,
-                colision == ColisionType::SandColision,
-                rng,
-            );
+            match self.check_game_over(mc) {
+                true => return true,
+                false => {
+                    if colision == ColisionType::SandColision {
+                        self.settle_and_get_new_block(mc, rng)
+                    }
+                },
+            }
         }
         false
     }
@@ -118,11 +127,14 @@ impl BlockController {
     pub fn handle_move_left(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
         let (can_move, colision) = self.move_left(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(
-                mc,
-                colision == ColisionType::SandColision,
-                rng,
-            );
+            match self.check_game_over(mc) {
+                true => return true,
+                false => {
+                    if colision == ColisionType::SandColision {
+                        self.settle_and_get_new_block(mc, rng)
+                    }
+                },
+            }
         }
         false
     }
@@ -146,11 +158,14 @@ impl BlockController {
     ) -> bool {
         let (can_move, colision) = self.rotate_clockwise(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(
-                mc,
-                colision == ColisionType::SandColision,
-                rng,
-            );
+            match self.check_game_over(mc) {
+                true => return true,
+                false => {
+                    if colision == ColisionType::SandColision {
+                        self.settle_and_get_new_block(mc, rng)
+                    }
+                },
+            }
         }
         false
     }
@@ -174,11 +189,14 @@ impl BlockController {
     ) -> bool {
         let (can_move, colision) = self.rotate_counter_clockwise(mc);
         if !can_move {
-            return self.check_game_over_and_settle_if(
-                mc,
-                colision == ColisionType::SandColision,
-                rng,
-            );
+            match self.check_game_over(mc) {
+                true => return true,
+                false => {
+                    if colision == ColisionType::SandColision {
+                        self.settle_and_get_new_block(mc, rng)
+                    }
+                },
+            }
         }
         false
     }
@@ -235,8 +253,8 @@ impl BlockController {
 
         for block_box in self.get_current_block().get_schema() {
             output.push((
-                self.block_center_pos.0 + block_box.0 as i32 * BLOCK_CHUNK_SIDE,
-                self.block_center_pos.1 + block_box.1 as i32 * BLOCK_CHUNK_SIDE,
+                self.block_center_pos.0 + block_box.0 as i32 * self.block_chunk_side,
+                self.block_center_pos.1 + block_box.1 as i32 * self.block_chunk_side,
             ))
         }
         (output, color)
@@ -275,13 +293,13 @@ impl BlockController {
 
 #[cfg(test)]
 mod test {
-    use crate::utils::tetris_rng::ThreadTetrisRng;
+    use crate::{constants::{block_schemas::SQUARE_BLOCK, colors::{RED, WHITE, YELLOW}}, objects::{block::BlockType, field::Field}, utils::tetris_rng::{MockTetrisRng, ThreadTetrisRng}};
 
     use super::*;
 
     #[test]
     fn create_block_controller() {
-        let bc: BlockController = BlockController::new();
+        let bc: BlockController = BlockController::new(1);
 
         assert_eq!(bc.block_queue.len(), 0);
         assert_eq!(bc.color_queue.len(), 0);
@@ -290,7 +308,7 @@ mod test {
 
     #[test]
     fn init_block_queue() {
-        let mut bc: BlockController = BlockController::new();
+        let mut bc: BlockController = BlockController::new(1);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
         bc.block_center_pos = (0, 0);
@@ -304,20 +322,26 @@ mod test {
 
     #[test]
     fn get_new_block() {
-        let mut bc: BlockController = BlockController::new();
-        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+        let mut bc: BlockController = BlockController::new(1);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::SquareBlock);
+        rng.set_block_color(RED);
 
         bc.block_center_pos = (0, 0);
         assert_eq!(bc.block_center_pos, (0, 0));
 
         bc.get_new_block(&mut rng);
         assert_eq!(bc.block_queue.len(), 1);
+        assert_eq!(bc.block_queue.get(0).unwrap().get_schema(), SQUARE_BLOCK);
         assert_eq!(bc.color_queue.len(), 1);
+        assert_eq!(*bc.color_queue.get(0).unwrap(), RED);
         assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
+       
         bc.get_new_block(&mut rng);
         assert_eq!(bc.block_queue.len(), 2);
         assert_eq!(bc.color_queue.len(), 2);
         assert_eq!(bc.block_center_pos, BLOCK_STARTING_POS);
+        
         bc.get_new_block(&mut rng);
         assert_eq!(bc.block_queue.len(), 2);
         assert_eq!(bc.color_queue.len(), 2);
@@ -325,8 +349,75 @@ mod test {
     }
 
     #[test]
+    fn generate_random_block() {
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::SquareBlock);
+
+        let new_block: Block = BlockController::generate_random_block(&mut rng);
+
+        assert_eq!(new_block.get_schema(), SQUARE_BLOCK);
+    }
+
+    #[test]
+    fn generate_random_color() {
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_color(YELLOW);
+
+        let color: Color = BlockController::generate_random_color(&mut rng);
+
+        assert_eq!(color, YELLOW);
+    }
+
+    #[test]
+    fn check_game_over_true() {
+        let mut bc: BlockController = BlockController::new(1);
+        let mut mc: MapController = MapController::new(3, 3, 1);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::SquareBlock);
+        bc.init_block_queue(&mut rng);
+
+        assert!(bc.check_game_over(&mut mc));
+    }
+
+    #[test]
+    fn check_game_over_false() {
+        let mut bc: BlockController = BlockController::new(1);
+        let mut mc: MapController = MapController::new(3, 3, 1);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::SquareBlock);
+        bc.init_block_queue(&mut rng);
+
+        bc.block_center_pos = (1, 1);
+
+        assert!(!bc.check_game_over(&mut mc));
+    }
+
+    #[test]
+    fn settle_and_get_new_block() {
+        let mut bc: BlockController = BlockController::new(1);
+        let mut mc: MapController = MapController::new(3, 3, 1);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::SquareBlock);
+        rng.set_block_color(WHITE); // for Graphics Controller
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (0, 0);
+
+        bc.settle_and_get_new_block(&mut mc, &mut rng);
+
+        let settled_fields: Vec<Field> = mc.get_fields_to_draw().iter().map(|f| (*f).clone()).collect();
+
+        for field in settled_fields.clone() {
+            println!("{:?}", field);
+        }
+
+        for (x, y) in [(0, 0), (0, 1), (1, 0), (1, 1)] {
+            assert!(settled_fields.contains(&Field::new(x, y, WHITE, 1)))
+        }
+    }
+
+    #[test]
     fn block_controller_move_down() {
-        let mut bc: BlockController = BlockController::new();
+        let mut bc: BlockController = BlockController::new(1);
         let mut mc: MapController = MapController::new(200, 400, 10);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         let starting_pos = BLOCK_STARTING_POS;
@@ -339,7 +430,7 @@ mod test {
 
     #[test]
     fn block_controller_move_right() {
-        let mut bc: BlockController = BlockController::new();
+        let mut bc: BlockController = BlockController::new(1);
         let mut mc: MapController = MapController::new(200, 400, 10);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         let starting_pos = BLOCK_STARTING_POS;
@@ -352,7 +443,7 @@ mod test {
 
     #[test]
     fn block_controller_move_left() {
-        let mut bc: BlockController = BlockController::new();
+        let mut bc: BlockController = BlockController::new(1);
         let mut mc: MapController = MapController::new(200, 400, 10);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         let starting_pos = BLOCK_STARTING_POS;
