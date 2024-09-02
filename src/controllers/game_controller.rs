@@ -3,7 +3,6 @@ use macroquad::{color::Color, input::KeyCode};
 use crate::{
     constants::{
         animation_constants::DEMOLISHION_CHUNK_SIZE,
-        block_constants::BLOCK_CHUNK_SIDE,
         colors::{BLACK, WHITE},
         interface_constants::{
             GAME_OVER_BOTTOM_FONT_SIZE, GAME_OVER_BOTTOM_TEXT, GAME_OVER_FONT_SIZE,
@@ -11,6 +10,7 @@ use crate::{
             SCORE_OUTLINE_WIDTH, SCORE_TEXT, V_BORDER_OFFSET,
         },
         map_constants::{MAP_HEIGHT, MAP_WIDTH},
+        TetrisConstants,
     },
     controllers::{
         block_controller::BlockController, graphic_controller::GraphicController,
@@ -25,19 +25,19 @@ where
 {
     score: u32,
     is_game_over: bool,
-    block_controller: BlockController,
-    map_controller: MapController,
+    block_controller: BlockController<'a>,
+    map_controller: MapController<'a>,
     rng: &'a mut R,
+    constants: &'a TetrisConstants,
 }
 
 impl<'a, R> GameController<'a, R>
 where
     R: TetrisRng,
 {
-    pub fn new(rng: &'a mut R) -> Self {
-        let block_controller: BlockController = BlockController::new(BLOCK_CHUNK_SIDE);
-        let map_controller: MapController =
-            MapController::new(MAP_WIDTH, MAP_HEIGHT, BLOCK_CHUNK_SIDE);
+    pub fn new(rng: &'a mut R, constants: &'a TetrisConstants) -> Self {
+        let block_controller: BlockController = BlockController::new(constants);
+        let map_controller: MapController = MapController::new(constants);
 
         GameController {
             score: 0,
@@ -45,6 +45,7 @@ where
             block_controller,
             map_controller,
             rng,
+            constants,
         }
     }
 
@@ -100,8 +101,15 @@ where
 
     fn draw_gamefield(&self) {
         GraphicController::draw_background();
-        GraphicController::draw_block(self.block_controller.get_block_to_draw());
-        GraphicController::draw_fields(&self.map_controller.get_fields_to_draw());
+        GraphicController::draw_block(
+            self.block_controller.get_block_to_draw(),
+            self.constants.grain_side_size,
+            self.constants.block_chunk_side,
+        );
+        GraphicController::draw_fields(
+            &self.map_controller.get_fields_to_draw(),
+            self.constants.grain_side_size,
+        );
         self.draw_interface();
     }
 
@@ -113,7 +121,11 @@ where
     fn draw_score(&self) {
         let score_text = format!("{}:{}", SCORE_TEXT, self.score);
         let text_center = GraphicController::get_text_center(&score_text, SCORE_FONT_SIZE);
-        let score_position = GraphicController::map_to_window_dimensions(MAP_WIDTH, 0);
+        let score_position = GraphicController::map_to_window_dimensions(
+            MAP_WIDTH,
+            0,
+            self.constants.grain_side_size,
+        );
 
         GraphicController::draw_text_with_outline(
             &score_text,
@@ -129,7 +141,12 @@ where
     fn draw_next_block(&self) {
         let next_block = self.get_next_block_miniature();
 
-        GraphicController::draw_block_miniature(next_block, (H_BORDER_OFFSET, V_BORDER_OFFSET));
+        GraphicController::draw_block_miniature(
+            next_block,
+            (H_BORDER_OFFSET, V_BORDER_OFFSET),
+            self.constants.preview_block_chunk_side,
+            self.constants.grain_side_size,
+        );
     }
 
     fn get_next_block_miniature(&self) -> (Vec<(i32, i32)>, Color) {
@@ -149,7 +166,11 @@ where
         let text_center = GraphicController::get_text_center(GAME_OVER_TEXT, GAME_OVER_FONT_SIZE);
         let bottom_text_center =
             GraphicController::get_text_center(GAME_OVER_BOTTOM_TEXT, GAME_OVER_BOTTOM_FONT_SIZE);
-        let map_center = GraphicController::map_to_window_dimensions(MAP_WIDTH / 2, MAP_HEIGHT / 2);
+        let map_center = GraphicController::map_to_window_dimensions(
+            MAP_WIDTH / 2,
+            MAP_HEIGHT / 2,
+            self.constants.grain_side_size,
+        );
 
         GraphicController::draw_text_with_outline(
             GAME_OVER_TEXT,
@@ -181,7 +202,10 @@ where
             demolishion_stash.extend(fields);
 
             self.draw_gamefield();
-            GraphicController::draw_fields_vanish(&demolishion_stash);
+            GraphicController::draw_fields_vanish(
+                &demolishion_stash,
+                self.constants.grain_side_size,
+            );
 
             GraphicController::flush().await;
         }
@@ -221,10 +245,19 @@ mod test {
 
     use super::*;
 
+    const TEST_CONSTANTS: TetrisConstants = TetrisConstants {
+        map_width: 10,
+        map_height: 10,
+        block_chunk_side: 1,
+        grain_side_size: 1,
+        preview_block_chunk_side: 1,
+        block_starting_pos: (0, 0),
+    };
+
     #[test]
     fn create_game_controller() {
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
-        let gc = GameController::new(&mut rng);
+        let gc = GameController::new(&mut rng, &TEST_CONSTANTS);
 
         assert_eq!(gc.is_game_over, false);
         assert_eq!(gc.score, 0);
@@ -233,7 +266,7 @@ mod test {
     #[test]
     fn clear() {
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
-        let mut gc = GameController::new(&mut rng);
+        let mut gc = GameController::new(&mut rng, &TEST_CONSTANTS);
         gc.score = 100;
         gc.is_game_over = true;
 

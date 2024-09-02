@@ -2,12 +2,10 @@ use macroquad::prelude::*;
 
 use crate::{
     constants::{
-        block_constants::{BLOCK_CHUNK_SIDE, PREVIEW_BLOCK_CHUNK_SIDE},
         block_skins::{NATURAL, SKIN_SIDE},
         colors::{
             BACKGROUND_COLOR, BLUE, BLUE_VAR, GREEN, GREEN_VAR, RED, RED_VAR, YELLOW, YELLOW_VAR,
         },
-        map_constants::GRAIN_SIDE_SIZE,
     },
     objects::field::Field,
 };
@@ -19,33 +17,42 @@ impl GraphicController {
         clear_background(BACKGROUND_COLOR);
     }
 
-    pub fn draw_fields(fields: &Vec<&Field>) {
+    pub fn draw_fields(fields: &Vec<&Field>, grain_side_size: i32) {
         for field in fields {
-            GraphicController::draw_field(field);
+            GraphicController::draw_field(field, grain_side_size);
         }
     }
 
-    pub fn draw_field(field: &Field) {
-        let (win_x, win_y) =
-            GraphicController::map_to_window_dimensions(field.get_x(), field.get_y());
+    pub fn draw_field(field: &Field, grain_side_size: i32) {
+        let (win_x, win_y) = GraphicController::map_to_window_dimensions(
+            field.get_x(),
+            field.get_y(),
+            grain_side_size,
+        );
         draw_rectangle(
             win_x,
             win_y,
-            GRAIN_SIDE_SIZE as f32,
-            GRAIN_SIDE_SIZE as f32,
+            grain_side_size as f32,
+            grain_side_size as f32,
             field.get_color(),
         );
     }
 
-    pub fn draw_block(block_schema_color: (Vec<(i32, i32)>, Color)) {
+    pub fn draw_block(
+        block_schema_color: (Vec<(i32, i32)>, Color),
+        grain_side_size: i32,
+        block_chunk_side: i32,
+    ) {
         let (block_schema, color) = block_schema_color;
-        for (x, y, color) in GraphicController::get_skin_for_schema(block_schema, color) {
-            let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y);
+        for (x, y, color) in
+            GraphicController::get_skin_for_schema(block_schema, color, block_chunk_side)
+        {
+            let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y, grain_side_size);
             draw_rectangle(
                 win_x,
                 win_y,
-                GRAIN_SIDE_SIZE as f32,
-                GRAIN_SIDE_SIZE as f32,
+                grain_side_size as f32,
+                grain_side_size as f32,
                 color,
             );
         }
@@ -54,15 +61,17 @@ impl GraphicController {
     pub fn draw_block_miniature(
         block_schema_color: (Vec<(i32, i32)>, Color),
         origin_point: (f32, f32),
+        preview_block_chunk_side: i32,
+        grain_side_size: i32,
     ) {
         let (block_schema, color) = block_schema_color;
         for (x, y) in block_schema {
-            let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y);
+            let (win_x, win_y) = GraphicController::map_to_window_dimensions(x, y, grain_side_size);
             draw_rectangle(
                 win_x + origin_point.0,
                 win_y + origin_point.1,
-                PREVIEW_BLOCK_CHUNK_SIDE as f32 * GRAIN_SIDE_SIZE as f32,
-                PREVIEW_BLOCK_CHUNK_SIDE as f32 * GRAIN_SIDE_SIZE as f32,
+                (preview_block_chunk_side * grain_side_size) as f32,
+                (preview_block_chunk_side * grain_side_size) as f32,
                 color,
             );
         }
@@ -107,20 +116,23 @@ impl GraphicController {
         );
     }
 
-    pub fn draw_fields_vanish(fields: &Vec<&Field>) {
+    pub fn draw_fields_vanish(fields: &Vec<&Field>, grain_side_size: i32) {
         for field in fields {
-            GraphicController::draw_field_vanish(field);
+            GraphicController::draw_field_vanish(field, grain_side_size);
         }
     }
 
-    fn draw_field_vanish(field: &Field) {
-        let (win_x, win_y) =
-            GraphicController::map_to_window_dimensions(field.get_x(), field.get_y());
+    fn draw_field_vanish(field: &Field, grain_side_size: i32) {
+        let (win_x, win_y) = GraphicController::map_to_window_dimensions(
+            field.get_x(),
+            field.get_y(),
+            grain_side_size,
+        );
         draw_rectangle(
             win_x,
             win_y,
-            GRAIN_SIDE_SIZE as f32,
-            GRAIN_SIDE_SIZE as f32,
+            grain_side_size as f32,
+            grain_side_size as f32,
             BACKGROUND_COLOR,
         );
     }
@@ -128,6 +140,7 @@ impl GraphicController {
     pub fn get_skin_for_schema(
         block_schema: Vec<(i32, i32)>,
         color: Color,
+        block_chunk_side: i32,
     ) -> Vec<(i32, i32, Color)> {
         let mut output = Vec::new();
         let color_variations: [Color; 3] = match color {
@@ -139,8 +152,8 @@ impl GraphicController {
         };
 
         for (x, y) in block_schema {
-            for x_offset in 0..=BLOCK_CHUNK_SIDE {
-                for y_offset in 0..=BLOCK_CHUNK_SIDE {
+            for x_offset in 0..block_chunk_side {
+                for y_offset in 0..block_chunk_side {
                     output.push((
                         x + x_offset,
                         y + y_offset,
@@ -179,8 +192,8 @@ impl GraphicController {
         (text_dimensions.width / 2.0, text_dimensions.height / 2.0)
     }
 
-    pub fn map_to_window_dimensions(x: i32, y: i32) -> (f32, f32) {
-        ((x * GRAIN_SIDE_SIZE) as f32, (y * GRAIN_SIDE_SIZE) as f32)
+    pub fn map_to_window_dimensions(x: i32, y: i32, grain_side_size: i32) -> (f32, f32) {
+        ((x * grain_side_size) as f32, (y * grain_side_size) as f32)
     }
 
     pub async fn flush() {
@@ -191,7 +204,7 @@ impl GraphicController {
 #[cfg(test)]
 mod test {
     use crate::constants::{
-        map_constants::{MAP_HEIGHT, MAP_WIDTH},
+        map_constants::{GRAIN_SIDE_SIZE, MAP_HEIGHT, MAP_WIDTH},
         window_constants::{WINDOW_HEIGHT, WINDOW_WIDTH},
     };
 
@@ -214,19 +227,23 @@ mod test {
     #[test]
     fn test_map_to_window_dimensions() {
         assert_eq!(
-            GraphicController::map_to_window_dimensions(0, 0),
+            GraphicController::map_to_window_dimensions(0, 0, GRAIN_SIDE_SIZE),
             (0.0, 0.0)
         );
         assert_eq!(
-            GraphicController::map_to_window_dimensions(MAP_WIDTH - 1, 0),
+            GraphicController::map_to_window_dimensions(MAP_WIDTH - 1, 0, GRAIN_SIDE_SIZE),
             ((WINDOW_WIDTH - GRAIN_SIDE_SIZE) as f32, 0.0)
         );
         assert_eq!(
-            GraphicController::map_to_window_dimensions(0, MAP_HEIGHT - 1),
+            GraphicController::map_to_window_dimensions(0, MAP_HEIGHT - 1, GRAIN_SIDE_SIZE),
             (0.0, (WINDOW_HEIGHT - GRAIN_SIDE_SIZE) as f32)
         );
         assert_eq!(
-            GraphicController::map_to_window_dimensions(MAP_WIDTH - 1, MAP_HEIGHT - 1),
+            GraphicController::map_to_window_dimensions(
+                MAP_WIDTH - 1,
+                MAP_HEIGHT - 1,
+                GRAIN_SIDE_SIZE
+            ),
             (
                 (WINDOW_WIDTH - GRAIN_SIDE_SIZE) as f32,
                 (WINDOW_HEIGHT - GRAIN_SIDE_SIZE) as f32

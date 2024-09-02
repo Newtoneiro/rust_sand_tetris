@@ -1,16 +1,16 @@
 use macroquad::color::Color;
 
 use crate::{
-    constants::colors::BACKGROUND_COLOR,
+    constants::{colors::BACKGROUND_COLOR, TetrisConstants},
     controllers::graphic_controller::GraphicController,
     objects::{field::Field, map::Map},
     utils::tetris_rng::TetrisRng,
 };
 
-pub struct MapController {
+pub struct MapController<'a> {
     map: Map,
     current_group_id: u32,
-    block_chunk_side: i32,
+    constants: &'a TetrisConstants,
 }
 
 #[derive(PartialEq, Debug)]
@@ -20,14 +20,14 @@ pub enum ColisionType {
     NoColision,
 }
 
-impl MapController {
-    pub fn new(map_width: i32, map_height: i32, block_chunk_side: i32) -> Self {
-        let map = Map::new(map_width, map_height);
+impl<'a> MapController<'a> {
+    pub fn new(constants: &'a TetrisConstants) -> Self {
+        let map = Map::new(constants.map_width, constants.map_height);
 
         MapController {
             map,
             current_group_id: 1,
-            block_chunk_side,
+            constants,
         }
     }
 
@@ -142,7 +142,8 @@ impl MapController {
     ) -> bool {
         let upper_most_box: (i8, i8) =
             *schema.iter().min_by_key(|schema_box| schema_box.1).unwrap();
-        let upper_border = center_pos.1 + (upper_most_box.1 as i32) * self.block_chunk_side;
+        let upper_border =
+            center_pos.1 + (upper_most_box.1 as i32) * self.constants.block_chunk_side;
 
         upper_border < 0
     }
@@ -156,7 +157,8 @@ impl MapController {
             .into_iter()
             .max_by_key(|schema_box| schema_box.1)
             .unwrap();
-        let bottom_border = center_pos.1 + (bottom_most_box.1 as i32 + 1) * self.block_chunk_side;
+        let bottom_border =
+            center_pos.1 + (bottom_most_box.1 as i32 + 1) * self.constants.block_chunk_side;
 
         bottom_border + 1 > self.map.get_height()
     }
@@ -171,7 +173,7 @@ impl MapController {
             .min_by_key(|schema_box| schema_box.0)
             .unwrap();
 
-        let left_border = center_pos.0 + left_most_box.0 as i32 * self.block_chunk_side;
+        let left_border = center_pos.0 + left_most_box.0 as i32 * self.constants.block_chunk_side;
 
         left_border < 0
     }
@@ -186,7 +188,8 @@ impl MapController {
             .max_by_key(|schema_box| schema_box.0)
             .unwrap();
 
-        let right_border = center_pos.0 + (right_most_box.0 as i32 + 1) * self.block_chunk_side;
+        let right_border =
+            center_pos.0 + (right_most_box.0 as i32 + 1) * self.constants.block_chunk_side;
 
         right_border + 1 > self.map.get_width()
     }
@@ -206,7 +209,9 @@ impl MapController {
     }
 
     pub fn spawn_block(&mut self, schema: Vec<(i32, i32)>, color: Color) {
-        for (x, y, color) in GraphicController::get_skin_for_schema(schema, color) {
+        for (x, y, color) in
+            GraphicController::get_skin_for_schema(schema, color, self.constants.block_chunk_side)
+        {
             self.map.change_field(x, y, color, self.current_group_id);
         }
         self.current_group_id += 1;
@@ -220,10 +225,10 @@ impl MapController {
         let mut output = Vec::new();
 
         for block_box in schema {
-            let x: i32 = center_pos.0 + block_box.0 as i32 * self.block_chunk_side;
-            let y: i32 = center_pos.1 + block_box.1 as i32 * self.block_chunk_side;
-            for x_offset in 0..self.block_chunk_side {
-                for y_offset in 0..self.block_chunk_side {
+            let x: i32 = center_pos.0 + block_box.0 as i32 * self.constants.block_chunk_side;
+            let y: i32 = center_pos.1 + block_box.1 as i32 * self.constants.block_chunk_side;
+            for x_offset in 0..self.constants.block_chunk_side {
+                for y_offset in 0..self.constants.block_chunk_side {
                     output.push((x + x_offset, y + y_offset));
                 }
             }
@@ -242,9 +247,21 @@ mod test {
 
     use super::*;
 
+    fn get_test_constants(width: i32, height: i32) -> TetrisConstants {
+        TetrisConstants {
+            map_width: width,
+            map_height: height,
+            block_chunk_side: 1,
+            grain_side_size: 1,
+            preview_block_chunk_side: 1,
+            block_starting_pos: (5, 0),
+        }
+    }
+
     #[test]
     fn is_game_over() {
-        let mc: MapController = MapController::new(3, 3, 1);
+        let constants = get_test_constants(3, 3);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         /*     3
             0| 1       |
@@ -260,7 +277,8 @@ mod test {
 
     #[test]
     fn clear() {
-        let mut mc: MapController = MapController::new(3, 3, 1);
+        let constants = get_test_constants(3, 3);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0)]);
 
         mc.current_group_id = 10;
@@ -277,7 +295,8 @@ mod test {
 
     #[test]
     fn tick_and_get_score_fields() {
-        let mut mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mut mc: MapController = MapController::new(&constants);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
         mc.map.change_field(0, 3, RED, 1);
@@ -302,7 +321,8 @@ mod test {
 
     #[test]
     fn demolish_fields() {
-        let mut mc: MapController = MapController::new(10, 10, 1);
+        let constants = get_test_constants(10, 10);
+        let mut mc: MapController = MapController::new(&constants);
 
         for x in 0..10 {
             mc.map.change_field(x, 0, RED, 1);
@@ -321,7 +341,8 @@ mod test {
 
     #[test]
     fn get_fields_to_draw() {
-        let mut mc: MapController = MapController::new(200, 400, 10);
+        let constants = get_test_constants(200, 400);
+        let mut mc: MapController = MapController::new(&constants);
         mc.map.change_field(40, 20, RED, 0);
         mc.map.change_field(30, 15, RED, 0);
         mc.map.change_field(100, 0, RED, 0);
@@ -336,7 +357,8 @@ mod test {
 
     #[test]
     fn get_fields_to_draw_empty() {
-        let mc: MapController = MapController::new(200, 400, 10);
+        let constants = get_test_constants(200, 400);
+        let mc: MapController = MapController::new(&constants);
 
         let fields_to_draw: Vec<&Field> = mc.get_fields_to_draw();
 
@@ -345,7 +367,8 @@ mod test {
 
     #[test]
     fn get_shuffled_fields() {
-        let mc: MapController = MapController::new(10, 10, 1);
+        let constants = get_test_constants(10, 10);
+        let mc: MapController = MapController::new(&constants);
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
 
         let fields_coords: Vec<(i32, i32)> = Vec::from([(0, 0), (5, 5), (9, 9)]);
@@ -359,7 +382,8 @@ mod test {
 
     #[test]
     fn can_block_move_down() {
-        let mut mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(0, 3, RED, 1);
         mc.map.change_field(0, 2, RED, 1);
@@ -386,7 +410,8 @@ mod test {
 
     #[test]
     fn can_block_move_left() {
-        let mut mc: MapController = MapController::new(3, 3, 1);
+        let constants = get_test_constants(3, 3);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(0, 2, RED, 1);
         /*
@@ -411,7 +436,8 @@ mod test {
 
     #[test]
     fn can_block_move_right() {
-        let mut mc: MapController = MapController::new(3, 3, 1);
+        let constants = get_test_constants(3, 3);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(1, 2, RED, 1);
         /*
@@ -436,7 +462,8 @@ mod test {
 
     #[test]
     fn can_block_rotate() {
-        let mut mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (1, 0)]);
         mc.map.change_field(2, 3, RED, 1);
         mc.map.change_field(2, 2, RED, 1);
@@ -463,7 +490,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_with_any_border() {
-        let mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
         assert!(mc.is_block_coliding_with_any_border(&test_schema, (0, -1)));
@@ -478,7 +506,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_upper_border() {
-        let mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
         assert!(mc.is_block_coliding_upper_border(&test_schema, (0, -1)));
@@ -490,7 +519,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_right_border() {
-        let mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
         assert!(mc.is_block_coliding_right_border(&test_schema, (3, 0)));
@@ -502,7 +532,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_bottom_border() {
-        let mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
         assert!(mc.is_block_coliding_bottom_border(&test_schema, (0, 3)));
@@ -514,7 +545,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_left_border() {
-        let mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
 
         assert!(mc.is_block_coliding_left_border(&test_schema, (-1, 0)));
@@ -526,7 +558,8 @@ mod test {
 
     #[test]
     fn is_block_coliding_with_sand() {
-        let mut mc: MapController = MapController::new(4, 4, 1);
+        let constants = get_test_constants(4, 4);
+        let mut mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0)]);
         mc.map.change_field(2, 3, RED, 1);
         mc.map.change_field(2, 2, RED, 1);
@@ -546,8 +579,10 @@ mod test {
 
     #[test]
     fn spawn_block() {
-        let mut mc: MapController = MapController::new(10, 10, 2);
-        let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0), (0, 1)]);
+        let mut constants = get_test_constants(10, 10);
+        constants.block_chunk_side = 2;
+        let mut mc: MapController = MapController::new(&constants);
+        let test_schema: Vec<(i32, i32)> = Vec::from([(0, 0), (0, 2)]);
 
         mc.spawn_block(test_schema, WHITE);
 
@@ -556,15 +591,17 @@ mod test {
         assert_eq!(mc.map.get_field(0, 1).unwrap().get_color(), WHITE);
         assert_eq!(mc.map.get_field(1, 0).unwrap().get_color(), WHITE);
         assert_eq!(mc.map.get_field(1, 1).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(0, 2).unwrap().get_color(), WHITE);
+        assert_eq!(mc.map.get_field(0, 3).unwrap().get_color(), WHITE);
         assert_eq!(mc.map.get_field(1, 2).unwrap().get_color(), WHITE);
-        assert_eq!(mc.map.get_field(2, 2).unwrap().get_color(), WHITE);
         assert_eq!(mc.map.get_field(1, 3).unwrap().get_color(), WHITE);
-        assert_eq!(mc.map.get_field(2, 3).unwrap().get_color(), WHITE);
     }
 
     #[test]
     fn get_fields_from_schema() {
-        let mc: MapController = MapController::new(10, 10, 2);
+        let mut constants = get_test_constants(10, 10);
+        constants.block_chunk_side = 2;
+        let mc: MapController = MapController::new(&constants);
         let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (0, 1)]);
 
         let fields = mc.get_fields_from_schema(&test_schema, (0, 0));

@@ -105,3 +105,12 @@ pub(crate) mod interface_constants {
 pub(crate) mod animation_constants {
     pub(crate) const DEMOLISHION_CHUNK_SIZE: usize = 20;
 }
+
+pub struct TetrisConstants {
+    pub map_width: i32,
+    pub map_height: i32,
+    pub block_chunk_side: i32,
+    pub grain_side_size: i32,
+    pub preview_block_chunk_side: i32,
+    pub block_starting_pos: (i32, i32),
+}
