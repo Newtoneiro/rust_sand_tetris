@@ -225,10 +225,12 @@ impl<'a> MapController<'a> {
         let mut output = Vec::new();
 
         for block_box in schema {
-            let x: i32 = center_pos.0 + block_box.0 as i32 * self.constants.block_chunk_side;
-            let y: i32 = center_pos.1 + block_box.1 as i32 * self.constants.block_chunk_side;
             for x_offset in 0..self.constants.block_chunk_side {
                 for y_offset in 0..self.constants.block_chunk_side {
+                    let x: i32 =
+                        center_pos.0 + (block_box.0 as i32 * self.constants.block_chunk_side);
+                    let y: i32 =
+                        center_pos.1 + (block_box.1 as i32 * self.constants.block_chunk_side);
                     output.push((x + x_offset, y + y_offset));
                 }
             }
@@ -567,7 +569,7 @@ mod test {
             0|            |
             1|       1    |
             2|    2 [3]   |
-            3|      [4]   |
+            3|      [4] 5 |
                0  1  2  3
         */
 
@@ -575,6 +577,7 @@ mod test {
         assert!(!mc.is_block_coliding_with_sand(&test_schema, (1, 2)));
         assert!(mc.is_block_coliding_with_sand(&test_schema, (2, 2)));
         assert!(mc.is_block_coliding_with_sand(&test_schema, (2, 3)));
+        assert!(!mc.is_block_coliding_with_sand(&test_schema, (3, 3)));
     }
 
     #[test]
@@ -602,11 +605,11 @@ mod test {
         let mut constants = get_test_constants(10, 10);
         constants.block_chunk_side = 2;
         let mc: MapController = MapController::new(&constants);
-        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (0, 1)]);
+        let test_schema: Vec<(i8, i8)> = Vec::from([(0, 0), (0, 1), (1, 0)]);
 
         let fields = mc.get_fields_from_schema(&test_schema, (0, 0));
 
-        assert_eq!(fields.len(), 8);
+        assert_eq!(fields.len(), 12);
         for expected_field in [
             (0, 0),
             (0, 1),
@@ -616,6 +619,10 @@ mod test {
             (0, 3),
             (1, 2),
             (1, 3),
+            (2, 0),
+            (2, 1),
+            (3, 0),
+            (3, 1),
         ] {
             assert!(fields.contains(&expected_field));
         }
