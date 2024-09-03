@@ -241,7 +241,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::utils::tetris_rng::ThreadTetrisRng;
+    use crate::utils::tetris_rng::{MockTetrisRng, ThreadTetrisRng};
 
     use super::*;
 
@@ -256,15 +256,16 @@ mod test {
 
     #[test]
     fn create_game_controller() {
-        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
         let gc = GameController::new(&mut rng, &TEST_CONSTANTS);
 
-        assert_eq!(gc.is_game_over, false);
         assert_eq!(gc.score, 0);
+        assert_eq!(gc.is_game_over, false);
+        assert_eq!(*gc.constants, TEST_CONSTANTS);
     }
 
     #[test]
-    fn clear() {
+    fn reset_game() {
         let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
         let mut gc = GameController::new(&mut rng, &TEST_CONSTANTS);
         gc.score = 100;
@@ -274,5 +275,15 @@ mod test {
 
         assert_eq!(gc.score, 0);
         assert_eq!(gc.is_game_over, false);
+    }
+
+    #[test]
+    fn handle_game_over() {
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        let mut gc = GameController::new(&mut rng, &TEST_CONSTANTS);
+
+        gc.handle_game_over();
+
+        assert!(gc.is_game_over);
     }
 }

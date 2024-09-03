@@ -92,7 +92,7 @@ impl<'a> BlockController<'a> {
 
     pub fn handle_move_right(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
         let mut game_over = false;
-        
+
         let (can_move, colision) = self.move_right(mc);
 
         if !can_move {
@@ -121,7 +121,7 @@ impl<'a> BlockController<'a> {
 
     pub fn handle_move_left(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
         let mut game_over = false;
-        
+
         let (can_move, colision) = self.move_left(mc);
 
         if !can_move {
@@ -154,7 +154,7 @@ impl<'a> BlockController<'a> {
         rng: &mut impl TetrisRng,
     ) -> bool {
         let mut game_over = false;
-        
+
         let (can_move, colision) = self.rotate_clockwise(mc);
 
         if !can_move {
@@ -187,7 +187,7 @@ impl<'a> BlockController<'a> {
         rng: &mut impl TetrisRng,
     ) -> bool {
         let mut game_over = false;
-        
+
         let (can_move, colision) = self.rotate_counter_clockwise(mc);
 
         if !can_move {
@@ -700,7 +700,7 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
 
@@ -717,7 +717,7 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
         mc.spawn_block(Vec::from([(6, 5)]), WHITE);
@@ -762,14 +762,17 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
 
         bc.rotate_clockwise(&mut mc);
 
         assert_eq!(bc.block_center_pos, (5, 5));
-        assert_eq!(bc.get_current_block().get_schema(), Vec::from([(0, 0), (1, 0), (-1, 0), (-2, 0)]));
+        assert_eq!(
+            bc.get_current_block().get_schema(),
+            Vec::from([(0, 0), (1, 0), (-1, 0), (-2, 0)])
+        );
     }
 
     #[test]
@@ -779,7 +782,7 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
 
@@ -796,7 +799,7 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
         mc.spawn_block(Vec::from([(6, 5)]), WHITE);
@@ -841,14 +844,17 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
 
         bc.rotate_counter_clockwise(&mut mc);
 
         assert_eq!(bc.block_center_pos, (5, 5));
-        assert_eq!(bc.get_current_block().get_schema(), Vec::from([(0, 0), (-1, 0), (1, 0), (2, 0)]));
+        assert_eq!(
+            bc.get_current_block().get_schema(),
+            Vec::from([(0, 0), (-1, 0), (1, 0), (2, 0)])
+        );
     }
 
     #[test]
@@ -857,7 +863,7 @@ mod test {
         let mut rng: MockTetrisRng = MockTetrisRng::new();
         rng.set_block_type(BlockType::IBlock);
         rng.set_block_color(WHITE);
-        
+
         bc.init_block_queue(&mut rng);
         bc.block_center_pos = (5, 5);
 

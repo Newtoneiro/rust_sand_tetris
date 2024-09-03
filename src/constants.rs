@@ -106,6 +106,7 @@ pub(crate) mod animation_constants {
     pub(crate) const DEMOLISHION_CHUNK_SIZE: usize = 20;
 }
 
+#[derive(Debug, PartialEq)]
 pub struct TetrisConstants {
     pub map_width: i32,
     pub map_height: i32,

@@ -66,6 +66,7 @@ impl TetrisRng for ThreadTetrisRng {
     }
 }
 
+#[derive(PartialEq, Debug)]
 pub struct MockTetrisRng {
     go_right: bool,
     row_order: Vec<i32>,
@@ -139,17 +140,6 @@ mod test_thread_tetris_rng {
         let _rng = ThreadTetrisRng::new();
     }
 
-    // #[test]
-    // fn gen_do_go_right() {
-    //     let rng = ThreadTetrisRng::new();
-    //     let possibilities = Vec::from([true, false]);
-    //     let results: Vec<bool> = Vec::new();
-
-    //     while possibilities != results {
-    //         let result = rng.
-    //     }
-    // }
-
     #[test]
     fn test_gen_do_go_right() {
         let rng = ThreadTetrisRng::new();
@@ -196,7 +186,16 @@ mod test_thread_tetris_rng {
         let rng = ThreadTetrisRng::new();
         let block_type = rng.generate_block_type();
 
-        assert!(matches!(block_type, BlockType::LBlock | BlockType::RevLBlock | BlockType::SquareBlock | BlockType::ZBlock | BlockType::RevZBlock | BlockType::TBlock | BlockType::IBlock));
+        assert!(matches!(
+            block_type,
+            BlockType::LBlock
+                | BlockType::RevLBlock
+                | BlockType::SquareBlock
+                | BlockType::ZBlock
+                | BlockType::RevZBlock
+                | BlockType::TBlock
+                | BlockType::IBlock
+        ));
     }
 
     #[test]
