@@ -131,6 +131,84 @@ impl TetrisRng for MockTetrisRng {
 }
 
 #[cfg(test)]
+mod test_thread_tetris_rng {
+    use super::*;
+
+    #[test]
+    fn create() {
+        let _rng = ThreadTetrisRng::new();
+    }
+
+    // #[test]
+    // fn gen_do_go_right() {
+    //     let rng = ThreadTetrisRng::new();
+    //     let possibilities = Vec::from([true, false]);
+    //     let results: Vec<bool> = Vec::new();
+
+    //     while possibilities != results {
+    //         let result = rng.
+    //     }
+    // }
+
+    #[test]
+    fn test_gen_do_go_right() {
+        let rng = ThreadTetrisRng::new();
+        let result = rng.gen_do_go_right();
+        // Since the output is random, we can only assert that it is a boolean
+        assert!(result == true || result == false);
+    }
+
+    #[test]
+    fn test_get_random_row_order() {
+        let rng = ThreadTetrisRng::new();
+        let width = 5;
+        let mut row_order = (0..width).collect::<Vec<i32>>();
+        let shuffled_row_order = rng.get_random_row_order(width);
+
+        // Ensure that the shuffled row contains the same elements as the original row order
+        assert_eq!(shuffled_row_order.len(), row_order.len());
+        row_order.sort();
+        let mut sorted_shuffled_row_order = shuffled_row_order.clone();
+        sorted_shuffled_row_order.sort();
+        assert_eq!(sorted_shuffled_row_order, row_order);
+
+        // Check that the row order has been shuffled (i.e., it is not in the original order)
+        assert!(shuffled_row_order != (0..width).collect::<Vec<i32>>());
+    }
+
+    #[test]
+    fn test_shuffle_fields() {
+        let rng = ThreadTetrisRng::new();
+        let field1 = Field::new(0, 0, RED, 1);
+        let field2 = Field::new(0, 1, RED, 1);
+        let field3 = Field::new(0, 2, RED, 1);
+        let field4 = Field::new(0, 3, RED, 1);
+
+        let mut fields = vec![&field1, &field2, &field3, &field4];
+        let original_fields = fields.clone();
+        rng.shuffle_fields(&mut fields);
+
+        assert_ne!(fields, original_fields);
+    }
+
+    #[test]
+    fn test_generate_block_type() {
+        let rng = ThreadTetrisRng::new();
+        let block_type = rng.generate_block_type();
+
+        assert!(matches!(block_type, BlockType::LBlock | BlockType::RevLBlock | BlockType::SquareBlock | BlockType::ZBlock | BlockType::RevZBlock | BlockType::TBlock | BlockType::IBlock));
+    }
+
+    #[test]
+    fn test_generate_block_color() {
+        let rng = ThreadTetrisRng::new();
+        let color = rng.generate_block_color();
+
+        assert!(matches!(color, RED | BLUE | GREEN | YELLOW));
+    }
+}
+
+#[cfg(test)]
 mod test_mock_tetris_rng {
     use super::*;
 

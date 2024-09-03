@@ -28,6 +28,7 @@ impl<'a> BlockController<'a> {
     pub fn init_block_queue(&mut self, rng: &mut impl TetrisRng) {
         self.block_queue.clear();
         self.color_queue.clear();
+
         self.get_new_block(rng); // Current
         self.get_new_block(rng); // Previous
     }
@@ -90,18 +91,20 @@ impl<'a> BlockController<'a> {
     }
 
     pub fn handle_move_right(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
+        let mut game_over = false;
+        
         let (can_move, colision) = self.move_right(mc);
+
         if !can_move {
-            match self.check_game_over(mc) {
-                true => return true,
-                false => {
-                    if colision == ColisionType::SandColision {
-                        self.settle_and_get_new_block(mc, rng)
-                    }
+            if self.check_game_over(mc) {
+                game_over = true;
+            } else {
+                if colision == ColisionType::SandColision {
+                    self.settle_and_get_new_block(mc, rng);
                 }
             }
         }
-        false
+        game_over
     }
 
     fn move_right(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
@@ -117,18 +120,20 @@ impl<'a> BlockController<'a> {
     }
 
     pub fn handle_move_left(&mut self, mc: &mut MapController, rng: &mut impl TetrisRng) -> bool {
+        let mut game_over = false;
+        
         let (can_move, colision) = self.move_left(mc);
+
         if !can_move {
-            match self.check_game_over(mc) {
-                true => return true,
-                false => {
-                    if colision == ColisionType::SandColision {
-                        self.settle_and_get_new_block(mc, rng)
-                    }
+            if self.check_game_over(mc) {
+                game_over = true;
+            } else {
+                if colision == ColisionType::SandColision {
+                    self.settle_and_get_new_block(mc, rng);
                 }
             }
         }
-        false
+        game_over
     }
 
     fn move_left(&mut self, mc: &mut MapController) -> (bool, ColisionType) {
@@ -148,18 +153,20 @@ impl<'a> BlockController<'a> {
         mc: &mut MapController,
         rng: &mut impl TetrisRng,
     ) -> bool {
+        let mut game_over = false;
+        
         let (can_move, colision) = self.rotate_clockwise(mc);
+
         if !can_move {
-            match self.check_game_over(mc) {
-                true => return true,
-                false => {
-                    if colision == ColisionType::SandColision {
-                        self.settle_and_get_new_block(mc, rng)
-                    }
+            if self.check_game_over(mc) {
+                game_over = true;
+            } else {
+                if colision == ColisionType::SandColision {
+                    self.settle_and_get_new_block(mc, rng);
                 }
             }
         }
-        false
+        game_over
     }
 
     fn rotate_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
@@ -179,18 +186,20 @@ impl<'a> BlockController<'a> {
         mc: &mut MapController,
         rng: &mut impl TetrisRng,
     ) -> bool {
+        let mut game_over = false;
+        
         let (can_move, colision) = self.rotate_counter_clockwise(mc);
+
         if !can_move {
-            match self.check_game_over(mc) {
-                true => return true,
-                false => {
-                    if colision == ColisionType::SandColision {
-                        self.settle_and_get_new_block(mc, rng)
-                    }
+            if self.check_game_over(mc) {
+                game_over = true;
+            } else {
+                if colision == ColisionType::SandColision {
+                    self.settle_and_get_new_block(mc, rng);
                 }
             }
         }
-        false
+        game_over
     }
 
     fn rotate_counter_clockwise(&mut self, mc: &MapController) -> (bool, ColisionType) {
@@ -287,7 +296,7 @@ impl<'a> BlockController<'a> {
 mod test {
     use crate::{
         constants::{
-            block_schemas::SQUARE_BLOCK,
+            block_schemas::{L_BLOCK, SQUARE_BLOCK},
             colors::{RED, WHITE, YELLOW},
         },
         objects::{block::BlockType, field::Field},
@@ -324,6 +333,50 @@ mod test {
         assert_eq!(bc.block_center_pos, TEST_CONSTANTS.block_starting_pos);
         assert_eq!(bc.block_queue.len(), 2);
         assert_eq!(bc.color_queue.len(), 2);
+    }
+
+    #[test]
+    fn get_current_block() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::LBlock);
+
+        bc.init_block_queue(&mut rng);
+
+        assert_eq!(bc.get_current_block().get_schema(), L_BLOCK);
+    }
+
+    #[test]
+    fn get_current_color() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_color(RED);
+
+        bc.init_block_queue(&mut rng);
+
+        assert_eq!(*bc.get_current_color(), RED);
+    }
+
+    #[test]
+    fn get_next_block() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::LBlock);
+
+        bc.init_block_queue(&mut rng);
+
+        assert_eq!(bc.get_next_block().get_schema(), L_BLOCK);
+    }
+
+    #[test]
+    fn get_next_color() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_color(RED);
+
+        bc.init_block_queue(&mut rng);
+
+        assert_eq!(*bc.get_next_color(), RED);
     }
 
     #[test]
@@ -638,5 +691,193 @@ mod test {
         bc.move_left(&mut mc);
 
         assert_eq!(bc.block_center_pos, (starting_pos.0 - 1, starting_pos.1));
+    }
+
+    #[test]
+    fn handle_rotate_clockwise() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+
+        let game_over = bc.handle_rotate_clockwise(&mut mc, &mut rng);
+
+        assert!(!game_over);
+        assert_eq!(bc.block_center_pos, (5, 5));
+    }
+
+    #[test]
+    fn handle_rotate_clockwise_settle() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+        mc.spawn_block(Vec::from([(6, 5)]), WHITE);
+
+        let game_over = bc.handle_rotate_clockwise(&mut mc, &mut rng);
+
+        assert!(!game_over);
+        assert_eq!(bc.block_center_pos, TEST_CONSTANTS.block_starting_pos);
+
+        let settled_fields: Vec<Field> = mc
+            .get_fields_to_draw()
+            .iter()
+            .map(|f| (*f).clone())
+            .collect();
+
+        for (x, y) in [(5, 4), (5, 5), (5, 6), (5, 7)] {
+            assert!(settled_fields.contains(&Field::new(x, y, WHITE, 2)));
+        }
+    }
+
+    #[test]
+    fn handle_rotate_clockwise_game_over() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::LBlock);
+        rng.set_block_color(WHITE);
+
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 0);
+        mc.spawn_block(Vec::from([(4, 0)]), WHITE);
+
+        let game_over = bc.handle_rotate_clockwise(&mut mc, &mut rng);
+
+        assert!(game_over);
+    }
+
+    #[test]
+    fn block_controller_rotate_clockwise() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+
+        bc.rotate_clockwise(&mut mc);
+
+        assert_eq!(bc.block_center_pos, (5, 5));
+        assert_eq!(bc.get_current_block().get_schema(), Vec::from([(0, 0), (1, 0), (-1, 0), (-2, 0)]));
+    }
+
+    #[test]
+    fn handle_rotate_counter_clockwise() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+
+        let game_over = bc.handle_rotate_counter_clockwise(&mut mc, &mut rng);
+
+        assert!(!game_over);
+        assert_eq!(bc.block_center_pos, (5, 5));
+    }
+
+    #[test]
+    fn handle_rotate_counter_clockwise_settle() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+        mc.spawn_block(Vec::from([(6, 5)]), WHITE);
+
+        let game_over = bc.handle_rotate_counter_clockwise(&mut mc, &mut rng);
+
+        assert!(!game_over);
+        assert_eq!(bc.block_center_pos, TEST_CONSTANTS.block_starting_pos);
+
+        let settled_fields: Vec<Field> = mc
+            .get_fields_to_draw()
+            .iter()
+            .map(|f| (*f).clone())
+            .collect();
+
+        for (x, y) in [(5, 4), (5, 5), (5, 6), (5, 7)] {
+            assert!(settled_fields.contains(&Field::new(x, y, WHITE, 2)));
+        }
+    }
+
+    #[test]
+    fn handle_rotate_counter_clockwise_game_over() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::LBlock);
+        rng.set_block_color(WHITE);
+
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 0);
+        mc.spawn_block(Vec::from([(4, 0)]), WHITE);
+
+        let game_over = bc.handle_rotate_counter_clockwise(&mut mc, &mut rng);
+
+        assert!(game_over);
+    }
+
+    #[test]
+    fn block_controller_rotate_counter_clockwise() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+
+        bc.rotate_counter_clockwise(&mut mc);
+
+        assert_eq!(bc.block_center_pos, (5, 5));
+        assert_eq!(bc.get_current_block().get_schema(), Vec::from([(0, 0), (-1, 0), (1, 0), (2, 0)]));
+    }
+
+    #[test]
+    fn get_next_block_miniature() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut rng: MockTetrisRng = MockTetrisRng::new();
+        rng.set_block_type(BlockType::IBlock);
+        rng.set_block_color(WHITE);
+        
+        bc.init_block_queue(&mut rng);
+        bc.block_center_pos = (5, 5);
+
+        let (miniature, color) = bc.get_next_block_miniature();
+
+        assert_eq!(color, WHITE);
+        assert_eq!(miniature, Vec::from([(0, 0), (0, -1), (0, 1), (0, 2)]));
+    }
+
+    #[test]
+    fn tick_and_check_game_over() {
+        let mut bc: BlockController = BlockController::new(&TEST_CONSTANTS);
+        let mut mc: MapController = MapController::new(&TEST_CONSTANTS);
+        let mut rng: ThreadTetrisRng = ThreadTetrisRng::new();
+        let starting_pos = TEST_CONSTANTS.block_starting_pos;
+        bc.init_block_queue(&mut rng);
+
+        let game_over = bc.tick_and_check_game_over(&mut mc, &mut rng);
+
+        assert!(!game_over);
+        assert_eq!(bc.block_center_pos, (starting_pos.0, starting_pos.1 + 1));
     }
 }
